@@ -2,11 +2,15 @@
     <mat-icon class="back-icon" (click)="goToHome()">arrow_back</mat-icon>
     <h1>{{ header }}</h1>
 </div>
-<hr />
-<h1 style="display: flex;
+
+<div style="margin-top: 65px;">
+    <hr />
+    <h1 *ngIf="showComingSoonText" style="display: flex;
     justify-content: center;
     color: mediumvioletred;">{{comingSoonText}}</h1>
-<div class="product-container">
+</div>
+
+<div *ngIf="!showComingSoonText" class="product-container">
     <div class="product-card" *ngFor="let p of products">
         <h3>{{ p.name }}</h3>
         <h4 style="color: mediumblue; margin: 0px;"> {{ p.portion }} </h4>

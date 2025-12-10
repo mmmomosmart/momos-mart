@@ -27,7 +27,8 @@ export class MenuItems {
 
   products: Product[] = [];
   header: string | null = null;
-comingSoonText: string = '';
+  showComingSoonText: boolean = false;
+  comingSoonText: string = '';
 
 
 
@@ -60,7 +61,10 @@ comingSoonText: string = '';
       paratha: parathaList
     };
 
-    if(category == 'others' || category == 'indian') this.comingSoonText='...'+'Coming Soon'+'...';
+    if (category == 'others' || category == 'indian') {
+      this.showComingSoonText = true;
+      this.comingSoonText = '...' + 'Coming Soon' + '...';
+    }
 
     this.products = categoryMap[category];
 
