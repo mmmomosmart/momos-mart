@@ -1,0 +1,77 @@
+table {
+  width: 100%;
+}
+
+.billing-header {
+    display: flex;
+    align-items: center;
+    gap: 11%;
+    color: white;
+    background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+    border-radius: 11px;
+}
+
+.back-icon{
+    color:white;
+    font-weight: bold;
+    border: 4px solid white;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-left: 5%;
+}
+
+.action-items {
+    display: flex;
+    gap: 40px;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.action-btn {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+}
+
+.items-box {
+    padding: 1.5%;
+    border: 2px solid mediumvioletred;
+    border-radius: 10px;
+    display: flex;
+    gap: 40px;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.icon-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.add-icon {
+    color:white;
+    font-weight: bold;
+    //border: 4px solid white;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.delete-btn {
+    color: #bc0606;
+    cursor: pointer;
+}
+
+.subTotal {
+    font-size: 30px;
+    color:mediumvioletred;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@media(max-width: 700px) {
+    .items-box {
+        width: 360px;
+        gap: 8px;
+    }
+}

@@ -1,0 +1,63 @@
+<div class="dashboard-header">
+    <div class="header-text">
+        !! ॐ श्री गणेशाय नमः !!
+    </div>
+    <div class="momos-mart-logos">
+         <img class="logo-img" src="assets/icons/icon_512x512.png" />
+        <h1 class="logo-name-left">Momos Mart</h1>
+        <!-- <h1 class="logo-name-left">Momos</h1>
+        <img class="logo-img" src="assets/logo-icon.jpg" /> -->
+        <!-- <h1 class="logo-name-right">Mart</h1> -->
+    </div>
+    <div class="address-text">
+        Ramnagri Sec-4, Rajeshwar Market, Patna-800025
+    </div>
+</div>
+<hr />
+
+<div class="stats">
+    <div class="date-box">
+        <mat-icon class="calendar_today" style="color: mediumvioletred;">calendar_today</mat-icon>
+        <h2 class="calendar_today" style="color: mediumvioletred;">Today: {{ currentDate }}</h2>
+    </div>
+    <div class="chip" (click)="goToOrderDetails()">Total Order Received: {{totalOrders}}</div>
+    <div class="chip">Total Order Sales: {{totalSales}}</div>
+</div>
+<hr />
+<div class="header">
+    <h2>Select Menu Category</h2>
+</div>
+
+<hr />
+
+<!-- <div class="gradient-container">
+    <div class="grad-box orange-box" (click)="selectCategory('momos')">Momos</div>
+    <div class="grad-box green-box" (click)="selectCategory('rolls')">Rolls</div>
+    <div class="grad-box blue-box" (click)="selectCategory('noodles')">Noodles</div>
+</div>
+
+<div class="gradient-container">
+    <div class="grad-box blue-box" (click)="selectCategory('rice')">Rice</div>
+    <div class="grad-box orange-box" (click)="selectCategory('chinese')">Chinese</div>
+    <div class="grad-box green-box" (click)="selectCategory('combos')">Combos</div>
+</div>
+
+<div class="gradient-container">
+    <div class="grad-box green-box" (click)="selectCategory('indian')">Indian</div>
+    <div class="grad-box blue-box" (click)="selectCategory('paratha')">Parathas</div>
+    <div class="grad-box orange-box" (click)="selectCategory('others')">Others</div>
+</div> -->
+
+<div class="grad-box-container">
+    <div class="grad-box orange-box" (click)="selectCategory('momos')">Momos</div>
+    <div class="grad-box green-box" (click)="selectCategory('rolls')">Rolls</div>
+    <div class="grad-box blue-box" (click)="selectCategory('noodles')">Noodles</div>
+    <div class="grad-box blue-box" (click)="selectCategory('rice')">Rice</div>
+    <div class="grad-box orange-box" (click)="selectCategory('chinese')">Chinese</div>
+    <div class="grad-box green-box" (click)="selectCategory('combos')">Combos</div>
+    <div class="grad-box green-box" (click)="selectCategory('indian')">Indian</div>
+    <div class="grad-box blue-box" (click)="selectCategory('paratha')">Parathas</div>
+    <div class="grad-box orange-box" (click)="selectCategory('others')">Others</div>
+</div>
+
+<hr />

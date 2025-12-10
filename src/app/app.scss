@@ -1,0 +1,59 @@
+.route-container {
+    margin: 2%;
+}
+
+/* Makes the whole page use full height */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Router content should take all remaining space */
+.route-container {
+    flex: 1;
+    overflow-y: auto;
+    /* allows scrolling for page content */
+}
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  height: 100px;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.15);
+  z-index: 1000;
+}
+
+.nextBtn, .saveBtn {
+  position: relative;
+  padding: 31px 31px;
+  font-size: 25px;
+  background: linear-gradient(45deg, #fa6767, #b35525) !important;
+}
+
+/* Badge (circle count) */
+.badge {
+  position: absolute;
+  top: -35px;
+  right: 44px;
+  
+  background: red;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}

@@ -1,0 +1,24 @@
+<div class="app-container">
+
+  <!-- Main content that changes with routing -->
+  <div class="route-container">
+    <router-outlet></router-outlet>
+  </div>
+
+  <footer class="footer">
+    <button *ngIf="!isInvoicePage" class="nextBtn" matButton="filled" [disabled]="disableBtn" (click)="goToInvoice()">
+      <span class="badge" *ngIf="cartCount > 0">
+        {{ cartCount }}
+      </span>
+      View Order
+    </button>
+    
+    <button *ngIf="isInvoicePage" class="saveBtn" matButton="filled" (click)="saveInvoice()">
+      <span class="badge" *ngIf="cartCount > 0">
+        {{ cartCount }}
+      </span>
+      Save Order
+    </button>
+  </footer>
+
+</div>

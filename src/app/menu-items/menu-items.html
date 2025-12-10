@@ -1,0 +1,25 @@
+<div class="momos-header">
+    <mat-icon class="back-icon" (click)="goToHome()">arrow_back</mat-icon>
+    <h1>{{ header }}</h1>
+</div>
+<hr />
+<h1 style="display: flex;
+    justify-content: center;
+    color: mediumvioletred;">{{comingSoonText}}</h1>
+<div class="product-container">
+    <div class="product-card" *ngFor="let p of products">
+        <h3>{{ p.name }}</h3>
+        <h4 style="color: mediumblue; margin: 0px;"> {{ p.portion }} </h4>
+        <h3 style="color: red;">₹ {{ p.price }}</h3>
+        <div class="addBtn">
+            <button class="add-btn" *ngIf="getQty(p) === 0" (click)="add(p)">
+                ADD
+            </button>
+        </div>
+        <div class="qty-box" *ngIf="getQty(p) > 0">
+            <button class="minus" (click)="remove(p)">−</button>
+            <span class="qty">{{ getQty(p) }}</span>
+            <button class="plus" (click)="add(p)">+</button>
+        </div>
+    </div>
+</div>

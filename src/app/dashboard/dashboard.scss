@@ -1,0 +1,194 @@
+.dashboard-header {
+    //background: linear-gradient(45deg, #fa6767, #b35525);
+    background: linear-gradient(45deg, #c40808, #c62727);
+    width: 100%;
+    height: 225px;
+    color: white;
+    align-items: center;
+    border-radius: 10px;
+}
+
+.header-text {
+    display: flex;
+    justify-content: center;
+    font-size: 31px;
+    font-weight: 600;
+    padding-top: 21px;
+    padding-bottom: 11px;
+}
+
+.address-text {
+    display: flex;
+    justify-content: center;
+    font-size: 31px;
+    font-weight: 500;
+    padding-top: 11px;
+    padding-bottom: 11px;
+}
+
+.momos-mart-logos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    //gap: 15px;
+    //margin-left: 15%;
+}
+
+.logo-name-left {
+    font-size: 61px;
+    text-decoration: overline underline;
+    text-underline-offset: 10px;
+}
+
+.logo-img {
+    height: 120px;
+    border-radius: 10px;
+}
+
+.logo-name-right {
+    font-size: 61px;
+    margin-right: 51px;    
+    text-decoration: overline underline;
+    text-underline-offset: 15px;
+}
+
+.gradient-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2%;
+    //margin-bottom: 2%;
+}
+
+.grad-box-container {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(3, auto);
+    grid-auto-columns: minmax(200px, 1fr);
+    gap: 12px;
+}
+
+.grad-box {
+    //width: 200px;
+    height: 150px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 26px;
+}
+
+.orange-box {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+}
+
+.green-box {
+    background: linear-gradient(45deg, #42e695, #3bb2b8);
+}
+
+.blue-box {
+    background: linear-gradient(45deg, #4776e6, #8e54e9);
+}
+
+.grad-box:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.5);
+}
+
+.stats {
+    border: 2px solid mediumvioletred;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.chip {
+    padding: 1.5%;
+    color: white;
+    background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+    border: 2px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.header {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.date-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+mat-icon {
+    font-size: 22px;
+    color: #555;
+}
+
+
+@media (max-width: 700px) {
+    .dashboard-header {
+        height: 180px;
+    }
+
+    .momos-mart-logos {
+        //margin-left: 8%;
+    }
+
+    .header-text {
+        font-size: 24px;
+        font-weight: 600;
+        padding-top: 11px;
+    }
+
+    .logo-name-left {
+        font-size: 31px;
+    }
+
+    .logo-img {
+        margin-left: 2%;
+        height: 100px;
+    }
+
+    .logo-name-right {
+        font-size: 31px;
+        margin-left: 4px;
+    }
+
+    .address-text {
+        font-size: 16px;
+        font-weight: 500;
+        padding-top: 5px;
+    }
+
+    .calendar_today {
+        font-size: 18px;
+    }
+
+    .chip {
+        margin-right: 7px;
+    }
+
+    .grad-box-container {
+        grid-auto-columns: minmax(100px, 1fr);
+    }
+
+    .grad-box {
+        //width: 105px;
+        height: 100px;
+        font-size: 24px;
+    }
+
+    .grad-box:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 8px 20px rgba(33, 150, 243, 0.5);
+    }
+}
