@@ -34,20 +34,28 @@
     //margin-left: 15%;
 }
 
+.logo-text-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+}
+
 .logo-name-left {
+    padding-top: 15px;
     font-size: 61px;
-    text-decoration: overline underline;
-    text-underline-offset: 10px;
+    text-decoration: overline;
 }
 
 .logo-img {
-    height: 120px;
+    height: 171px;
     border-radius: 10px;
+    cursor: pointer;
 }
 
 .logo-name-right {
     font-size: 61px;
-    margin-right: 51px;    
+    margin-right: 51px;
     text-decoration: overline underline;
     text-underline-offset: 15px;
 }
@@ -106,7 +114,7 @@
 }
 
 .chip {
-    padding: 1.5%;
+    padding: 1.4%;
     color: white;
     background: linear-gradient(45deg, #ff6b6b, #ff8e53);
     border: 2px;
@@ -136,11 +144,7 @@ mat-icon {
 
 @media (max-width: 700px) {
     .dashboard-header {
-        height: 180px;
-    }
-
-    .momos-mart-logos {
-        //margin-left: 8%;
+        height: 155px;
     }
 
     .header-text {
@@ -149,13 +153,19 @@ mat-icon {
         padding-top: 11px;
     }
 
+    .logo-text-top {
+        font-size: 21px;
+    }
+
     .logo-name-left {
-        font-size: 31px;
+        font-size: 35px;
+        padding-top: 4px;
     }
 
     .logo-img {
-        margin-left: 2%;
-        height: 100px;
+        //margin-left: 2%;
+        height: 121px;
+        cursor: pointer;
     }
 
     .logo-name-right {

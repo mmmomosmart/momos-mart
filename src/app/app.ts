@@ -12,16 +12,19 @@ import { CommonModule } from '@angular/common';
   styleUrl: './app.scss'
 })
 export class App {
-  orderdetails: Product[] = [];
   constructor(private router: Router, private CartService: CartService) {
     // Detect route change
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.isInvoicePage = event.url === '/invoice';
+        this.isAdminPage = event.url === '/admin';
       }
     });
   }
   protected readonly title = signal('momos-mart');
+  
+  orderdetails: Product[] = [];
+  isAdminPage= false;
   disableBtn = true;
   isInvoicePage = false;
   cartCount = 0;

@@ -5,8 +5,8 @@
     <router-outlet></router-outlet>
   </div>
 
-  <footer class="footer">
-    <button *ngIf="!isInvoicePage" class="nextBtn" matButton="filled" [disabled]="disableBtn" (click)="goToInvoice()">
+  <footer *ngIf="!isAdminPage" class="footer">
+    <button *ngIf="!isInvoicePage && !isAdminPage" class="nextBtn" matButton="filled" [disabled]="disableBtn" (click)="goToInvoice()">
       <span class="badge" *ngIf="cartCount > 0">
         {{ cartCount }}
       </span>

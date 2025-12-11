@@ -61,4 +61,9 @@ export class Dashboard {
   goToOrderDetails() {
     this.router.navigate(['order-details'])
   }
+
+  goToAdmin() {
+    console.log('Admin clicked');
+    this.router.navigate(['admin'])
+  }
 }
