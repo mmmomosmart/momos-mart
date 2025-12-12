@@ -18,7 +18,7 @@ export class AdminDashboard {
   async onTestList() {
     try {
       await this.printer.requestPermissions();
-      await this.printer.testList();
+      //await this.printer.testList();
     } catch (err: any) {
       alert("Error: " + (err?.message || JSON.stringify(err)));
     }

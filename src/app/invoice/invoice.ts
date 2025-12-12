@@ -6,6 +6,7 @@ import { Product } from '../../menu-category/product-model';
 import { MatIcon } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-invoice',
@@ -50,16 +51,34 @@ export class Invoice {
     this.router.navigate(['/']);
   }
 
-  editInvoive() {
+  editInvoice() {
     this.hideActionBtns = true;
     if (!this.displayedColumns.includes('action')) {
       this.displayedColumns.push('action');
     }
   }
 
-  deleteInvoive() {
-    this.cartService.clearCart();
-    this.goToHome();
+  deleteInvoice() {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          text: "Invoice has been deleted !",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false
+        });
+        this.cartService.clearCart();
+        this.goToHome();
+      }
+    });
   }
 
   generateBillNo() {

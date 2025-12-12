@@ -13,7 +13,7 @@
       View Order
     </button>
     
-    <button *ngIf="isInvoicePage" class="saveBtn" matButton="filled" (click)="saveInvoice()">
+    <button *ngIf="isInvoicePage" class="saveBtn" matButton="filled" (click)="showDialog()">
       <span class="badge" *ngIf="cartCount > 0">
         {{ cartCount }}
       </span>

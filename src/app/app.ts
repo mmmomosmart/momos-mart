@@ -5,6 +5,9 @@ import { Product } from '../menu-category/product-model';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import { PrinterService } from './service/printer-service';
+import Swal from 'sweetalert2';
+import { StatusBar } from '@capacitor/status-bar';
+
 
 @Component({
   selector: 'app-root',
@@ -14,6 +17,8 @@ import { PrinterService } from './service/printer-service';
 })
 export class App {
   constructor(private router: Router, private CartService: CartService, private printer: PrinterService) {
+    StatusBar.setOverlaysWebView({ overlay: false });
+    
     // Detect route change
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -63,7 +68,7 @@ export class App {
     return date_time;
   }
 
-  saveInvoice() {
+  saveInvoice(printAfterSave: boolean = false) {
     const billNumber = localStorage.getItem('invoiceNumber');
 
     const invoiceData = {
@@ -89,12 +94,71 @@ export class App {
     localStorage.setItem('invoices', JSON.stringify(existingInvoices));
 
     //print the invoice
-    this.onPrintInvoice(invoiceData);
+    if (printAfterSave)
+      this.onPrintInvoice(invoiceData);
 
     this.CartService.clearCart();
     this.cartCount = 0;
     this.disableBtn = true;
     this.router.navigate(['/']);
+  }
+
+  showDialog() {
+    Swal.fire({
+      title: "Choose an option",
+      icon: "question",
+
+      showCancelButton: true,
+      cancelButtonText: "Cancel",
+      cancelButtonColor: "#e53935", // Material red
+
+      showDenyButton: true,
+      denyButtonText: "Save",
+      denyButtonColor: "#1976d2", // Material blue
+
+      showConfirmButton: true,
+      confirmButtonText: "Save & Print",
+      confirmButtonColor: "#43a047", // Material green
+
+      reverseButtons: false
+    }).then((result) => {
+
+      if (result.isConfirmed) {
+        // Save & Print selected
+        console.log("Save & Print clicked");
+
+        this.saveInvoice(true);
+
+        //Swal.fire("Done!", "Invoice saved & printed.", "success");
+        Swal.fire({
+          icon: "success",
+          text: "Invoice saved & printed.",
+          showConfirmButton: false,
+          timer: 1500
+        });
+      }
+
+      else if (result.isDenied) {
+        // Save only selected
+        console.log("Save clicked");
+
+        this.saveInvoice(false);
+
+        //Swal.fire("Saved!", "Invoice has been saved.", "success");
+        Swal.fire({
+          icon: "success",
+          text: "Invoice has been saved.",
+          showConfirmButton: false,
+          timer: 1500
+        });
+      }
+
+      else if (result.dismiss === Swal.DismissReason.cancel) {
+        console.log("Cancelled");
+      }
+
+    });
+
   }
 
   async onPrintInvoice(invoiceData: any) {
@@ -105,7 +169,14 @@ export class App {
       const ezo = devices.find(d => d.name && d.name.includes("EZO"));
 
       if (!ezo) {
-        alert("EZO Printer not found!");
+        //alert("EZO Printer not found!");
+        //Swal.fire("EZO Printer not found!", "", "error");
+        Swal.fire({
+          icon: "error",
+          text: "EZO Printer not found!",
+          showConfirmButton: false,
+          timer: 1500
+        });
         return;
       }
 
@@ -114,9 +185,17 @@ export class App {
       await this.printer.printInvoice(invoiceData);
       await this.printer.disconnect();
 
-      alert('Invoice printed successfully!');
+      //alert('Invoice printed successfully!');
     } catch (err: any) {
-      alert('Print failed: ' + (err?.message || JSON.stringify(err)));
+      //alert('Print failed: ' + (err?.message || JSON.stringify(err)));
+      //Swal.fire('Print failed: ' + (err?.message || JSON.stringify(err)), "", "error");
+      Swal.fire({
+        icon: "error",
+        title: "Print Failed",
+        text: err?.message || JSON.stringify(err),
+        showConfirmButton: false,
+        timer: 1500
+      });
     }
   }
 }
