@@ -4,6 +4,7 @@ import { CartService } from './service/cart-service';
 import { Product } from '../menu-category/product-model';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
+import { PrinterService } from './service/printer-service';
 
 @Component({
   selector: 'app-root',
@@ -12,7 +13,7 @@ import { CommonModule } from '@angular/common';
   styleUrl: './app.scss'
 })
 export class App {
-  constructor(private router: Router, private CartService: CartService) {
+  constructor(private router: Router, private CartService: CartService, private printer: PrinterService) {
     // Detect route change
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -22,9 +23,9 @@ export class App {
     });
   }
   protected readonly title = signal('momos-mart');
-  
+
   orderdetails: Product[] = [];
-  isAdminPage= false;
+  isAdminPage = false;
   disableBtn = true;
   isInvoicePage = false;
   cartCount = 0;
@@ -75,8 +76,8 @@ export class App {
       total: this.CartService.getTotal()
     };
 
-    
-      console.log("Created", invoiceData.createdOn.date);
+
+    console.log("Created", invoiceData.createdOn.date);
 
     // Get existing invoices or empty array
     const existingInvoices = JSON.parse(localStorage.getItem('invoices') || '[]');
@@ -87,9 +88,35 @@ export class App {
     // Save back to localStorage
     localStorage.setItem('invoices', JSON.stringify(existingInvoices));
 
+    //print the invoice
+    this.onPrintInvoice(invoiceData);
+
     this.CartService.clearCart();
     this.cartCount = 0;
     this.disableBtn = true;
     this.router.navigate(['/']);
+  }
+
+  async onPrintInvoice(invoiceData: any) {
+    try {
+      await this.printer.requestPermissions();
+
+      const devices = await this.printer.listDevices();
+      const ezo = devices.find(d => d.name && d.name.includes("EZO"));
+
+      if (!ezo) {
+        alert("EZO Printer not found!");
+        return;
+      }
+
+      await this.printer.connect(ezo.id || ezo.address);
+
+      await this.printer.printInvoice(invoiceData);
+      await this.printer.disconnect();
+
+      alert('Invoice printed successfully!');
+    } catch (err: any) {
+      alert('Print failed: ' + (err?.message || JSON.stringify(err)));
+    }
   }
 }
