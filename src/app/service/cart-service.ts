@@ -6,7 +6,7 @@ import { Product } from '../../menu-category/product-model';
   providedIn: 'root',
 })
 export class CartService {
-
+  private invoiceData: any;
   private cartSource = new BehaviorSubject<Product[]>([]);
   cart$ = this.cartSource.asObservable();
 
@@ -120,5 +120,13 @@ export class CartService {
     return this.cartSource.value.reduce((sum, item) => {
       return sum + (item.quantity ?? 0);
     }, 0);
+  }
+
+  setInvoice(data: any) {
+    this.invoiceData = data;
+  }
+
+  getInvoice() {
+    return this.invoiceData;
   }
 }

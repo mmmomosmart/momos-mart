@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { PrinterService } from '../service/printer-service';
 import { CartService } from '../service/cart-service';
 import Swal from 'sweetalert2';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-order-details',
@@ -17,7 +18,7 @@ import Swal from 'sweetalert2';
   styleUrl: './order-details.scss',
 })
 export class OrderDetails {
-  constructor(private router: Router, private printer: PrinterService, private cartService: CartService) { }
+  constructor(private cdr: ChangeDetectorRef, private router: Router, private printer: PrinterService, private cartService: CartService) { }
 
   todaysInvoices: any;
   invoices: any;
@@ -46,8 +47,9 @@ export class OrderDetails {
     this.router.navigate(['/']);
   }
 
-  editInvoice(invoiceData: any) {
-    console.log(invoiceData);
+  editInvoice(invoice: any) {
+    this.cartService.setInvoice(invoice);
+    this.router.navigate(['/invoice']);
   }
 
   printInvoice(invoiceData: any) {
@@ -107,20 +109,23 @@ export class OrderDetails {
       confirmButtonText: "Yes, delete it!"
     }).then((result) => {
       if (result.isConfirmed) {
-        // Step 1: Get existing invoices
+        // 1️⃣ Remove from component state instantly
+        this.todaysInvoices = this.todaysInvoices.filter(
+          (inv: any) => inv.invoiceNumber !== invoiceNumberToDelete
+        );
+
+        this.cdr.detectChanges();
+
+        // 2️⃣ Update localStorage
         let invoices = JSON.parse(localStorage.getItem("invoices") || "[]");
-
-        // Step 2: Remove the invoice with the specific number
         invoices = invoices.filter((inv: any) => inv.invoiceNumber !== invoiceNumberToDelete);
-
-        // Step 3: Update localStorage
         localStorage.setItem("invoices", JSON.stringify(invoices));
 
         console.log("Invoice deleted successfully");
-        this.getInvoiceDetails();
-        
+
+        // 3️⃣ Show success alert
         Swal.fire({
-          text: "Invoice has been deleted !",
+          text: "Invoice has been deleted!",
           icon: "success",
           timer: 1500,
           showConfirmButton: false
@@ -128,4 +133,5 @@ export class OrderDetails {
       }
     });
   }
+
 }

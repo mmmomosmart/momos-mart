@@ -34,13 +34,26 @@
     border-radius: 5px;
 }
 
+.order-details-body-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .items {
  color: mediumvioletred;   
 }
 
 .editIcon {
+    // cursor: pointer;
+    // height: 20px;
+    // width: 32px;
+    // margin-top: 4px;
     cursor: pointer;
+    color: mediumvioletred;
     height: 20px;
-    width: 32px;
-    margin-top: 4px;
+    border: 2px solid mediumvioletred;
+    border-radius: 5px;
+    padding: 7px;
+    margin-left: 11px;
 }

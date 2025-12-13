@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { PrinterService } from './service/printer-service';
 import Swal from 'sweetalert2';
 import { StatusBar } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
 
 
 @Component({
@@ -18,7 +19,7 @@ import { StatusBar } from '@capacitor/status-bar';
 export class App {
   constructor(private router: Router, private CartService: CartService, private printer: PrinterService) {
     StatusBar.setOverlaysWebView({ overlay: false });
-    
+
     // Detect route change
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -36,6 +37,9 @@ export class App {
   cartCount = 0;
 
   ngOnInit() {
+    if (Capacitor.isNativePlatform()) {
+      document.body.classList.add('native-app');
+    }
     this.getCartItems();
   }
 

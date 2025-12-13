@@ -33,21 +33,32 @@ export class Invoice {
   }
 
   getOrderDetails() {
-    this.cartService.cart$.subscribe(items => {
-      // Modify each item before setting to dataSource
-      this.dataSource = items.map(item => ({
-        ...item,
-        displayName: item.portion
-          ? `${item.name} [${item.portion}]`
-          : item.name
-      }));
-      this.itemCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
-      this.total = items.reduce((sum, item) => sum + (item.total || 0), 0);
-      if (items.length === 0) this.hideActionBtns = true;
-    });
+    if (this.cartService.getInvoice()) {
+      console.log(this.cartService.getInvoice())
+      this.mapDataSource(this.cartService.getInvoice()?.items);
+    } else {
+      this.cartService.cart$.subscribe(items => {
+        // Modify each item before setting to dataSource
+        console.log(items);
+        this.mapDataSource(items);
+      });
+    }
+  }
+
+  mapDataSource(items: Product[]) {
+    this.dataSource = items.map(item => ({
+      ...item,
+      displayName: item.portion
+        ? `${item.name} [${item.portion}]`
+        : item.name
+    }));
+    this.itemCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
+    this.total = items.reduce((sum, item) => sum + (item.total || 0), 0);
+    if (items.length === 0) this.hideActionBtns = true;
   }
 
   goToHome() {
+    this.cartService.setInvoice(null);
     this.router.navigate(['/']);
   }
 
@@ -82,33 +93,44 @@ export class Invoice {
   }
 
   generateBillNo() {
-    const currentDate = new Date();
+    if (this.cartService.getInvoice()?.invoiceNumber) {
+      return this.cartService.getInvoice()?.invoiceNumber;
+    }
+    else {
+      const currentDate = new Date();
 
-    const yyyy = currentDate.getFullYear();
-    const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(currentDate.getDate()).padStart(2, '0');
+      const yyyy = currentDate.getFullYear();
+      const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(currentDate.getDate()).padStart(2, '0');
 
-    const hh = String(currentDate.getHours()).padStart(2, '0');
-    const min = String(currentDate.getMinutes()).padStart(2, '0');
-    const ss = String(currentDate.getSeconds()).padStart(2, '0');
+      const hh = String(currentDate.getHours()).padStart(2, '0');
+      const min = String(currentDate.getMinutes()).padStart(2, '0');
+      const ss = String(currentDate.getSeconds()).padStart(2, '0');
 
-    const invoiceNumber = `INV-${yyyy}${mm}${dd}-${hh}${min}${ss}`
+      const invoiceNumber = `INV-${yyyy}${mm}${dd}-${hh}${min}${ss}`
 
-    localStorage.setItem('invoiceNumber', invoiceNumber);
+      localStorage.setItem('invoiceNumber', invoiceNumber);
 
-    return invoiceNumber;
+      return invoiceNumber;
+    }
   }
 
   getCurrentDateTime() {
-    const today = new Date();
-    const formattedDate = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear();
+    if (this.cartService.getInvoice()?.createdOn) {
+      return this.cartService.getInvoice()?.createdOn?.date + ' ' + this.cartService.getInvoice()?.createdOn?.time;
+    }
+    else {
+      const today = new Date();
+      const formattedDate = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear();
 
-    const time = today.toLocaleTimeString();
+      const time = today.toLocaleTimeString();
 
-    return (formattedDate + ' ' + time);
+      return (formattedDate + ' ' + time);
+    }
   }
 
   deleteItem(item: any) {
+    console.log(item);
     this.cartService.removeItem(item);
   }
 

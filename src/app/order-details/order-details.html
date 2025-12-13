@@ -8,17 +8,19 @@
         <mat-expansion-panel class="bill-details" (opened)="panelOpenState.set(true)"
             (closed)="panelOpenState.set(false)">
             <mat-expansion-panel-header>
-                <mat-panel-title> Invoice Number : {{ p.invoiceNumber }} </mat-panel-title>
+                <mat-panel-title> Invoice Number :<br> {{ p.invoiceNumber }} </mat-panel-title>
                 <mat-panel-description>
                     Total : {{p.total}}
                 </mat-panel-description>
             </mat-expansion-panel-header>
             <div class="order-details-body">
-                <h2 style="color: mediumvioletred;  text-align: center;">Invoice Details
+                <div class="order-details-body-header">
+                <h2 style="color: mediumvioletred;  text-align: center;">Invoice Details</h2>
                     <mat-icon class="editIcon" (click)="editInvoice(p)">edit_square</mat-icon>
                     <mat-icon class="editIcon" (click)="printInvoice(p)">print</mat-icon>
                     <mat-icon class="editIcon" (click)="deleteInvoice(p)">delete</mat-icon>
-                </h2>
+                
+                </div>
                 <hr />
                 <div>
 
