@@ -1,48 +1,48 @@
 <div class="dashboard-container">
-<div class="dashboard-header">
-    <div class="momos-mart-logos">
-        <img class="logo-img" src="assets/icons/icon_512x512.png" (click)="goToAdmin()"/>
-        <div>
-            <h2 class="logo-text-top">|| ॐ श्री गणेशाय नमः ||</h2>
-            <h1 class="logo-name-left">Momos Mart</h1>
+    <div class="dashboard-header">
+        <div class="momos-mart-logos">
+            <img class="logo-img" src="assets/icons/icon_512x512.png" (click)="goToAdmin()" />
+            <div>
+                <h2 class="logo-text-top">|| ॐ श्री गणेशाय नमः ||</h2>
+                <h1 class="logo-name-left">Momos Mart</h1>
+            </div>
         </div>
+        <!-- <div class="address-text">
+            Ramnagri Sec-4, Rajeshwar Market, Patna-800025
+        </div> -->
     </div>
-    <div class="address-text">
-        Ramnagri Sec-4, Rajeshwar Market, Patna-800025
+
+    <hr />
+
+    <div class="stats">
+        <div class="date-box">
+            <mat-icon class="calendar_today" style="color: mediumvioletred;">calendar_today</mat-icon>
+            <h2 class="calendar_today" style="color: mediumvioletred;">Today: {{ currentDate }}</h2>
+        </div>
+        <div class="chip" (click)="goToOrderDetails()">Total Order Received: {{totalOrders}}</div>
+        <div class="chip">Total Order Sales: {{totalSales}}</div>
     </div>
-</div>
 
-<hr />
+    <hr />
 
-<div class="stats">
-    <div class="date-box">
-        <mat-icon class="calendar_today" style="color: mediumvioletred;">calendar_today</mat-icon>
-        <h2 class="calendar_today" style="color: mediumvioletred;">Today: {{ currentDate }}</h2>
+    <div class="header">
+        <h2>Select Menu Category</h2>
     </div>
-    <div class="chip" (click)="goToOrderDetails()">Total Order Received: {{totalOrders}}</div>
-    <div class="chip">Total Order Sales: {{totalSales}}</div>
-</div>
 
-<hr />
+    <hr />
 
-<div class="header">
-    <h2>Select Menu Category</h2>
-</div>
+    <div class="grad-box-container">
+        <div class="grad-box orange-box" (click)="selectCategory('momos')">Momos</div>
+        <div class="grad-box green-box" (click)="selectCategory('rolls')">Rolls</div>
+        <div class="grad-box blue-box" (click)="selectCategory('noodles')">Noodles</div>
+        <div class="grad-box blue-box" (click)="selectCategory('rice')">Rice</div>
+        <div class="grad-box orange-box" (click)="selectCategory('chinese')">Chinese</div>
+        <div class="grad-box green-box" (click)="selectCategory('combos')">Combos</div>
+        <div class="grad-box green-box" (click)="selectCategory('indian')">Indian</div>
+        <div class="grad-box blue-box" (click)="selectCategory('paratha')">Parathas</div>
+        <div class="grad-box orange-box" (click)="selectCategory('others')">Others</div>
+    </div>
 
-<hr />
-
-<div class="grad-box-container">
-    <div class="grad-box orange-box" (click)="selectCategory('momos')">Momos</div>
-    <div class="grad-box green-box" (click)="selectCategory('rolls')">Rolls</div>
-    <div class="grad-box blue-box" (click)="selectCategory('noodles')">Noodles</div>
-    <div class="grad-box blue-box" (click)="selectCategory('rice')">Rice</div>
-    <div class="grad-box orange-box" (click)="selectCategory('chinese')">Chinese</div>
-    <div class="grad-box green-box" (click)="selectCategory('combos')">Combos</div>
-    <div class="grad-box green-box" (click)="selectCategory('indian')">Indian</div>
-    <div class="grad-box blue-box" (click)="selectCategory('paratha')">Parathas</div>
-    <div class="grad-box orange-box" (click)="selectCategory('others')">Others</div>
-</div>
-
-<hr />
+    <hr />
 
 </div>

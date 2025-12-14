@@ -15,11 +15,11 @@
             </mat-expansion-panel-header>
             <div class="order-details-body">
                 <div class="order-details-body-header">
-                <h2 style="color: mediumvioletred;  text-align: center;">Invoice Details</h2>
+                    <h2 style="color: mediumvioletred;  text-align: center;">Invoice Details</h2>
                     <mat-icon class="editIcon" (click)="editInvoice(p)">edit_square</mat-icon>
                     <mat-icon class="editIcon" (click)="printInvoice(p)">print</mat-icon>
                     <mat-icon class="editIcon" (click)="deleteInvoice(p)">delete</mat-icon>
-                
+
                 </div>
                 <hr />
                 <div>
@@ -59,4 +59,7 @@
             </div>
         </mat-expansion-panel>
     </mat-accordion>
+</div>
+<div class="no-orders" *ngIf="!todaysInvoices.length">
+    No orders placed today.
 </div>

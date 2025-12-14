@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../service/auth-service';
+import { Capacitor } from '@capacitor/core';
 
 interface MenuItem {
   label: string;
@@ -30,6 +31,12 @@ export class AdminDashboard {
 
   constructor(private printer: PrinterService, private router: Router) { }
 
+  ngOnInit() {
+    if (Capacitor.isNativePlatform()) {
+      document.body.classList.add('native-app');
+    }
+  }
+
   adminMenuItems: MenuItem[] = [
     // { label: 'Dashboard', icon: 'home', route: 'dashboard', roles: ['admin', 'cashier'] },
     { label: 'Purchase List', icon: 'inventory', route: 'purchase', roles: ['admin'] },
@@ -42,7 +49,8 @@ export class AdminDashboard {
   ];
 
   subadminMenuItems: MenuItem[] = [
-    { label: 'Purchase List', icon: 'inventory', route: 'purchase', roles: ['admin'] }
+    { label: 'Purchase List', icon: 'inventory', route: 'purchase', roles: ['admin'] },
+    { label: 'Expense List', icon: 'request_quote', route: 'expense-list', roles: ['admin'] }
   ]
 
   logout() {
@@ -54,7 +62,5 @@ export class AdminDashboard {
   goToHome() {
     this.router.navigate(['/']);
   }
-
-
 }
 
