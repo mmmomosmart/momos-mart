@@ -1,0 +1,33 @@
+.login-title {
+    border: 2px solid mediumvioletred;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: mediumvioletred;
+    gap: 11px;
+}
+
+.login-card {
+    max-width: 500px;
+    margin: 16px auto;
+    border: 2px solid mediumvioletred;
+    border-radius: 10px;
+    padding: 16px;
+
+    h2 {
+        padding-top: 2px;
+    }
+}
+
+.login-form {
+    display: grid;
+    gap: 16px;
+    //margin-top: 12px;
+}
+
+@media (max-width: 700px) {
+    .login-card {
+        margin-top: 11%;
+    }
+}

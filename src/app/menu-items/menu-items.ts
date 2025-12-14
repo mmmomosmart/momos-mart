@@ -30,8 +30,6 @@ export class MenuItems {
   showComingSoonText: boolean = false;
   comingSoonText: string = '';
 
-
-
   ngOnInit() {
     const category = this.activatedRoute.snapshot.paramMap.get('category');
     this.header = category

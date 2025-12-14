@@ -6,8 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import { PrinterService } from './service/printer-service';
 import Swal from 'sweetalert2';
-import { StatusBar } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
+import { InvoiceService } from './service/invoice-service';
 
 
 @Component({
@@ -17,14 +17,19 @@ import { Capacitor } from '@capacitor/core';
   styleUrl: './app.scss'
 })
 export class App {
-  constructor(private router: Router, private CartService: CartService, private printer: PrinterService) {
-    StatusBar.setOverlaysWebView({ overlay: false });
-
+  constructor(
+    private router: Router,
+    private CartService: CartService,
+    private printer: PrinterService,
+    private invoiceService: InvoiceService
+  ) {
     // Detect route change
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
+        this.isAdminPage = event.url === ('/admin') || event.url.startsWith('/admin/');
+        this.isMenuPage = event.url.startsWith('/menu-items/');
         this.isInvoicePage = event.url === '/invoice';
-        this.isAdminPage = event.url === '/admin';
+        this.isEditInvoicePage = event.url === '/edit-invoice';
       }
     });
   }
@@ -33,13 +38,19 @@ export class App {
   orderdetails: Product[] = [];
   isAdminPage = false;
   disableBtn = true;
+  isMenuPage = false;
   isInvoicePage = false;
+  isEditInvoicePage = false;
+  isInvoiceEdited = false;
   cartCount = 0;
 
   ngOnInit() {
     if (Capacitor.isNativePlatform()) {
       document.body.classList.add('native-app');
     }
+    this.invoiceService.isInvoiceEdited.subscribe((edited) => {
+      this.isInvoiceEdited = edited;
+    });
     this.getCartItems();
   }
 
@@ -58,7 +69,12 @@ export class App {
   }
 
   goToInvoice() {
-    this.router.navigate(['/invoice']);
+    if (this.isInvoiceEdited) {
+      this.router.navigate(['/edit-invoice']);
+    }
+    else {
+      this.router.navigate(['/invoice']);
+    }
   }
 
   getCurrentDateTime() {
@@ -202,4 +218,63 @@ export class App {
       });
     }
   }
+
+  updateInvoiceV1() {
+  const currentDate = this.getCurrentDateTime().date;
+
+  const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+  const editedInvoice = JSON.parse(localStorage.getItem('editedInvoices') || '{}');
+
+  const updatedInvoices = invoices.map((invoice: any) =>
+    invoice.createdOn.date === currentDate &&
+    invoice.invoiceNumber === editedInvoice.invoiceNumber
+      ? editedInvoice
+      : invoice
+  );
+
+  // Save back to localStorage
+  localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
+  this.CartService.clearCart();
+  this.cartCount = 0;
+  this.invoiceService.isInvoiceEdited.next(false);
+  this.invoiceService.setInvoice({});
+  this.disableBtn = true;
+  this.router.navigate(['/']);
+}
+
+  updateInvoiceV2() {
+  const currentDate = this.getCurrentDateTime().date;
+
+  const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+  const editedInvoice = JSON.parse(localStorage.getItem('editedInvoices') || '{}');
+
+  // 1️⃣ Extract today's invoices
+  const todaysInvoices = invoices.filter(
+    (inv: any) => inv.createdOn.date === currentDate
+  );
+
+  // 2️⃣ Update the edited one
+  const updatedTodaysInvoices = todaysInvoices.map((inv: any) =>
+    inv.invoiceNumber === editedInvoice.invoiceNumber
+      ? editedInvoice
+      : inv
+  );
+
+  // 3️⃣ Merge back with non-today invoices
+  const nonTodaysInvoices = invoices.filter(
+    (inv: any) => inv.createdOn.date !== currentDate
+  );
+
+  const finalInvoices = [...nonTodaysInvoices, ...updatedTodaysInvoices];
+
+  // 4️⃣ Save
+  localStorage.setItem('invoices', JSON.stringify(finalInvoices));
+  this.invoiceService.isInvoiceEdited.next(false);
+  this.CartService.clearCart();
+  this.cartCount = 0;
+  this.invoiceService.setInvoice({});
+  this.disableBtn = true;
+  this.router.navigate(['/']);
+}
+
 }

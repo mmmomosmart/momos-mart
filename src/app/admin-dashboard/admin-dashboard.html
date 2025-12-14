@@ -1,4 +1,61 @@
-<p>admin-dashboard working!</p>
-<!-- <button (click)="onTestList()">Test Devices</button> -->
-<button (click)="onPrintInvoice()">Print Test</button>
-<button (click)="goToHome()">Back to Home</button>
+<mat-sidenav-container class="container">
+
+    <!-- SIDENAV -->
+    <mat-sidenav #drawer mode="over" class="sidenav">
+        <div class="profile">
+            <img src="assets/icon.png" alt="Momos Mart" />
+            <h3>Momos Mart</h3>
+            <p>Business</p>
+            <!-- Logged-in role display (optional) -->
+            <span class="role" *ngIf="auth.isAdmin()">Admin</span>
+            <span class="role" *ngIf="auth.isSubAdmin()">Sub Admin</span>
+        </div>
+
+        <ng-container *ngIf="auth.isAdmin()">
+            <mat-nav-list>
+                <a mat-list-item class="menu-item" *ngFor="let item of adminMenuItems" [routerLink]="item.route"
+                    routerLinkActive="active">
+                    <mat-icon>{{ item.icon }}</mat-icon>
+                    <span class="menu-text">{{ item.label }}</span>
+                </a>
+            </mat-nav-list>
+        </ng-container>
+
+        <ng-container *ngIf="auth.isSubAdmin()">
+            <mat-nav-list>
+                <a mat-list-item class="menu-item" *ngFor="let item of subadminMenuItems" [routerLink]="item.route"
+                    routerLinkActive="active">
+                    <mat-icon>{{ item.icon }}</mat-icon>
+                    <span class="menu-text">{{ item.label }}</span>
+                </a>
+            </mat-nav-list>
+        </ng-container>
+
+    </mat-sidenav>
+
+    <!-- MAIN CONTENT -->
+    <mat-sidenav-content>
+        <mat-toolbar color="primary" class="toolbar">
+            <button mat-icon-button (click)="drawer.toggle()">
+                <mat-icon>menu</mat-icon>
+            </button>
+            <span>Momos Mart</span>
+
+            <div class="toolbar-right-section">
+                <span class="spacer">|</span>
+
+                <!-- Logout button *ngIf="auth.isAdmin() || auth.isSubAdmin()"-->
+                <button mat-icon-button  (click)="logout()"
+                    matTooltip="Logout">
+                    <mat-icon>logout</mat-icon>
+                </button>
+                <span class="spacer">|</span>
+            </div>
+        </mat-toolbar>
+        
+        <div class="content">
+            <router-outlet></router-outlet>
+        </div>
+    </mat-sidenav-content>
+
+</mat-sidenav-container>

@@ -7,18 +7,20 @@ import { MatIcon } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import Swal from 'sweetalert2';
+import { InvoiceService } from '../service/invoice-service';
 
 @Component({
-  selector: 'app-invoice',
+  selector: 'app-update-invoice',
   imports: [CommonModule, MatTableModule, MatIcon, MatButtonModule],
-  templateUrl: './invoice.html',
-  styleUrl: './invoice.scss',
+  templateUrl: './update-invoice.html',
+  styleUrl: './update-invoice.scss',
 })
 
-export class Invoice {
+export class UpdateInvoice {
   constructor(
     private router: Router,
-    private cartService: CartService) { }
+    private cartService: CartService,
+    private invoiceService: InvoiceService) { }
 
   displayedColumns: string[] = ['name', 'quantity', 'price', 'total'];
   dataSource: Product[] = [];
@@ -35,11 +37,19 @@ export class Invoice {
   }
 
   getOrderDetails() {
+    const invoice = this.invoiceService.getInvoice();
+    const invoiceItems = this.invoiceService.getInvoice()?.items || [];
     this.cartService.cart$.subscribe(items => {
-      // Modify each item before setting to dataSource
-      console.log(items);
-      this.mapDataSource(items);
+      if (items) {
+        // push newly add item before setting to dataSource
+        console.log(items);
+        invoiceItems.push(...items);
+      }
     });
+    invoice.items = invoiceItems;
+    invoice.total = invoice.items.reduce((sum: number, i: any) => sum + i.total, 0);
+    this.invoiceService.setInvoice(invoice);
+    this.mapDataSource(invoiceItems);
   }
 
   mapDataSource(items: Product[]) {
@@ -89,34 +99,33 @@ export class Invoice {
   }
 
   generateBillNo() {
-    const currentDate = new Date();
-
-    const yyyy = currentDate.getFullYear();
-    const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(currentDate.getDate()).padStart(2, '0');
-
-    const hh = String(currentDate.getHours()).padStart(2, '0');
-    const min = String(currentDate.getMinutes()).padStart(2, '0');
-    const ss = String(currentDate.getSeconds()).padStart(2, '0');
-
-    const invoiceNumber = `INV-${yyyy}${mm}${dd}-${hh}${min}${ss}`
-
-    localStorage.setItem('invoiceNumber', invoiceNumber);
-
-    return invoiceNumber;
+    if (this.invoiceService.getInvoice()?.invoiceNumber) {
+      return this.invoiceService.getInvoice()?.invoiceNumber;
+    }
   }
 
   getCurrentDateTime() {
-    const today = new Date();
-    const formattedDate = today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear();
-
-    const time = today.toLocaleTimeString();
-
-    return (formattedDate + ' ' + time);
+    if (this.invoiceService.getInvoice()?.createdOn) {
+      return this.invoiceService.getInvoice().createdOn.date + ' ' + this.invoiceService.getInvoice().createdOn.time;
+    } else {
+      return '';
+    }
   }
 
   deleteItem(item: any) {
-    this.cartService.removeItem(item);
+    console.log(item);
+    console.log(this.dataSource);
+    const invoice = this.invoiceService.getInvoice();
+    const invoiceItems = this.invoiceService.getInvoice().items;
+    const updated = invoiceItems.filter((i: any) =>
+      !(i.name === item.name && i.portion === item.portion)
+    );
+    invoice.items = updated;
+    invoice.total = invoice.items.reduce((sum: number, i: any) => sum + i.total, 0);
+    console.log(invoice);
+    this.invoiceService.setInvoice(invoice)
+    this.mapDataSource(updated);
   }
 
 }
+

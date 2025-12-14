@@ -6,7 +6,7 @@
   </div>
 
   <footer *ngIf="!isAdminPage" class="footer">
-    <button *ngIf="!isInvoicePage && !isAdminPage" class="nextBtn" matButton="filled" [disabled]="disableBtn" (click)="goToInvoice()">
+    <button *ngIf="!isInvoicePage && !isAdminPage && !isEditInvoicePage" class="nextBtn" matButton="filled" [disabled]="disableBtn" (click)="goToInvoice()">
       <span class="badge" *ngIf="cartCount > 0">
         {{ cartCount }}
       </span>
@@ -18,6 +18,10 @@
         {{ cartCount }}
       </span>
       Save Order
+    </button>
+
+    <button *ngIf="isEditInvoicePage" class="saveBtn" matButton="filled" (click)="updateInvoiceV1()">
+      Update Order
     </button>
   </footer>
 

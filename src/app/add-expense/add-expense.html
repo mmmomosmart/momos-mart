@@ -1,0 +1,57 @@
+<mat-card class="expense-card">
+    <div class="addExpense-title"><mat-icon>add_circle_outline</mat-icon><h2>Add Business Expense</h2></div>
+    <hr />
+    <form [formGroup]="expenseForm" (ngSubmit)="addExpense()" class="expense-form">
+        <!-- Item Dropdown -->
+        <mat-form-field appearance="outline">
+            <mat-label>Item</mat-label>
+            <mat-select formControlName="item">
+                <mat-option *ngFor="let item of items" [value]="item">
+                    {{ item }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+
+
+        <!-- Amount -->
+        <mat-form-field appearance="outline">
+            <mat-label>Amount</mat-label>
+            <input matInput type="number" formControlName="amount" placeholder="Enter price" />
+        </mat-form-field>
+
+
+        <!-- Purchase Date -->
+        <mat-form-field appearance="outline">
+            <mat-label>Purchase Date</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="purchaseDate" />
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+
+        <!-- Status -->
+        <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status">
+                <mat-option value="PAID">Paid</mat-option>
+                <mat-option value="DUE">Due</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+
+        <!-- Submit -->
+        <button mat-raised-button color="primary" type="submit" [disabled]="expenseForm.invalid">
+            Add Expense
+        </button>
+    </form>
+</mat-card>
+
+
+<!-- Preview -->
+<!-- <mat-card *ngIf="expenses().length" class="expense-card">
+    <mat-card-title>Added Expenses</mat-card-title>
+    <div class="expense-row" *ngFor="let exp of expenses()">
+        <strong>{{ exp.item }}</strong> - ₹{{ exp.amount }} | {{ exp.status }} | {{ exp.purchaseDate | date:'dd MMM
+        yyyy' }}
+    </div>
+</mat-card> -->

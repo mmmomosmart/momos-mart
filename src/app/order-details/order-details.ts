@@ -10,6 +10,7 @@ import { PrinterService } from '../service/printer-service';
 import { CartService } from '../service/cart-service';
 import Swal from 'sweetalert2';
 import { ChangeDetectorRef } from '@angular/core';
+import { InvoiceService } from '../service/invoice-service';
 
 @Component({
   selector: 'app-order-details',
@@ -18,7 +19,12 @@ import { ChangeDetectorRef } from '@angular/core';
   styleUrl: './order-details.scss',
 })
 export class OrderDetails {
-  constructor(private cdr: ChangeDetectorRef, private router: Router, private printer: PrinterService, private cartService: CartService) { }
+  constructor(private cdr: ChangeDetectorRef,
+    private router: Router,
+    private printer: PrinterService,
+    private cartService: CartService,
+    private invoiceService: InvoiceService
+  ) { }
 
   todaysInvoices: any;
   invoices: any;
@@ -48,8 +54,9 @@ export class OrderDetails {
   }
 
   editInvoice(invoice: any) {
-    this.cartService.setInvoice(invoice);
-    this.router.navigate(['/invoice']);
+    this.invoiceService.setInvoice(invoice);
+    this.invoiceService.isInvoiceEdited.next(true);
+    this.router.navigate(['/edit-invoice']);
   }
 
   printInvoice(invoiceData: any) {
