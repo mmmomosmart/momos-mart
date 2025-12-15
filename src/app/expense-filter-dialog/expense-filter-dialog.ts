@@ -12,7 +12,6 @@ import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-expense-filter-dialog',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,

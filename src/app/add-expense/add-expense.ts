@@ -54,18 +54,29 @@ export class AddExpense {
 
   addExpense() {
     if (this.expenseForm.invalid) return;
-
     const expense = this.expenseForm.value as Expense;
-
     this.expenses.update(list => [...list, expense]);
 
     console.log("Current Expenses:", this.expenses());
-
     console.log("Expense Added:", expense);
 
+    const html = `
+    <div style="max-width: 500px; border: 2px solid mediumvioletred; border-radius: 10px; padding: 11px; color: #d33;">
+      <h3>Added Expenses</h3>
+        <div>
+          <strong>${expense.item}</strong>
+          - ₹${expense.amount}
+          | ${expense.status}
+          | ${new Date(expense.purchaseDate).toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          })}
+        </div>
+    </div>`;
+
     Swal.fire({
-      title: "Preview Expense",
-      text: "[ " + expense.item + " -- " + expense.amount + " -- " + expense.status + " ]",
+      html: html,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
