@@ -33,6 +33,13 @@ export interface Expense {
   status: 'Paid' | 'Due';
 }
 
+interface ExpenseGroup {
+  key: string;
+  items: Expense[];
+  total: number;
+}
+
+
 @Component({
   selector: 'app-expense-list',
   imports: [
@@ -96,8 +103,8 @@ export class ExpenseList {
   items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material'];
 
   displayedColumns = this.auth.isAdmin()
-   ? ['item', 'amount', 'purchaseDate', 'status', 'actions']
-   : ['item', 'amount', 'purchaseDate', 'status'];
+    ? ['item', 'amount', 'purchaseDate', 'status', 'actions']
+    : ['item', 'amount', 'purchaseDate', 'status'];
 
   expenses = signal<Expense[]>(
     (JSON.parse(localStorage.getItem('expenses') || '[]') as Expense[])
@@ -113,6 +120,9 @@ export class ExpenseList {
   pageSize = signal(10);
 
   pageSizeOptions = [10, 20, 30];
+
+  groupBy = signal<'' | 'date' | 'item' | 'status'>('');
+
 
   // Filters
   itemFilter = signal('');
@@ -179,6 +189,48 @@ export class ExpenseList {
       23, 59, 59, 999
     );
   }
+
+  groupedExpenses = computed<ExpenseGroup[]>(() => {
+    const list = this.filteredExpenses();
+    const group = this.groupBy();
+
+    if (!group) {
+      return [{
+        key: '',
+        items: list,
+        total: list.reduce((s, e) => s + e.amount, 0)
+      }];
+    }
+
+    const map = new Map<string, Expense[]>();
+
+    for (const e of list) {
+      let key = '';
+
+      switch (group) {
+        case 'date':
+          key = new Date(e.purchaseDate).toDateString();
+          break;
+        case 'item':
+          key = e.item;
+          break;
+        case 'status':
+          key = e.status;
+          break;
+      }
+
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)!.push(e);
+    }
+
+    return Array.from(map.entries()).map(([key, items]) => ({
+      key,
+      items,
+      total: items.reduce((s, e) => s + e.amount, 0)
+    }));
+  });
 
   filteredExpenses = computed(() => {
     const list = this.expenses().filter(e => {
