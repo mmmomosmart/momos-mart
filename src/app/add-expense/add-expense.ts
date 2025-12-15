@@ -12,6 +12,7 @@ import { MatIcon, MatIconModule } from '@angular/material/icon';
 import Swal from 'sweetalert2';
 
 export interface Expense {
+  id: string;
   item: string;
   amount: number;
   purchaseDate: Date;
@@ -55,6 +56,7 @@ export class AddExpense {
   addExpense() {
     if (this.expenseForm.invalid) return;
     const expense = this.expenseForm.value as Expense;
+    expense.id = crypto.randomUUID();
     this.expenses.update(list => [...list, expense]);
 
     console.log("Current Expenses:", this.expenses());

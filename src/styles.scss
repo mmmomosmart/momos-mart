@@ -42,13 +42,13 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
     padding: 0px 11px 7px !important;
 }
 
-// .app-container {
-//   padding-top: 24px; /* Android status bar height */
-// }
-
 body.native-app .app-container {
   padding-top: 30px;
 }
+
+.mat-mdc-paginator-container {
+    padding-top: 5px !important;
+  }
 
 /* FORCE DIALOG WIDTH */
 .expense-filter-dialog .mat-mdc-dialog-surface {

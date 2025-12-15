@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
@@ -12,12 +12,21 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import Swal from 'sweetalert2';
 import { MatDialog } from '@angular/material/dialog';
 import { ExpenseFilterDialog } from '../expense-filter-dialog/expense-filter-dialog';
+import { ExpenseEditDialog } from '../expense-edit-dialog/expense-edit-dialog';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatDividerModule } from '@angular/material/divider';
+import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { AuthService } from '../service/auth-service';
 
 
 export interface Expense {
+  id: string;
   item: string;
   amount: number;
   purchaseDate: Date;
@@ -39,7 +48,9 @@ export interface Expense {
     MatDatepickerModule,
     MatNativeDateModule,
     MatExpansionModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatPaginatorModule,
+    MatDividerModule
   ],
   templateUrl: './expense-list.html',
   styleUrl: './expense-list.scss',
@@ -47,9 +58,9 @@ export interface Expense {
 export class ExpenseList {
   today = new Date();
 
+  auth = inject(AuthService);
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
-
 
   filterForm = this.fb.group({
     item: [''],
@@ -59,12 +70,11 @@ export class ExpenseList {
     toDate: [null as Date | null]
   });
 
-
   constructor() {
     const today = this.normalizeDate(new Date());
     this.dateFilter.set(today);
     this.filterForm.valueChanges.subscribe(value => {
-
+      this.pageIndex.set(0);
       // If range is selected → clear single date
       if (value.fromDate || value.toDate) {
         this.filterForm.patchValue(
@@ -85,10 +95,24 @@ export class ExpenseList {
 
   items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material'];
 
-  // displayedColumns = ['item', 'amount', 'purchaseDate', 'status', 'actions'];
-  displayedColumns = ['item', 'amount', 'purchaseDate', 'status'];
+  displayedColumns = this.auth.isAdmin()
+   ? ['item', 'amount', 'purchaseDate', 'status', 'actions']
+   : ['item', 'amount', 'purchaseDate', 'status'];
 
-  expenses = signal<Expense[]>(JSON.parse(localStorage.getItem('expenses') || '[]'));
+  expenses = signal<Expense[]>(
+    (JSON.parse(localStorage.getItem('expenses') || '[]') as Expense[])
+      .map(e => ({
+        ...e,
+        id: e.id ?? crypto.randomUUID()
+      }))
+  );
+
+  sortBy = signal<'date_desc' | 'date_asc' | 'paid_first' | 'due_first'>('date_desc');
+
+  pageIndex = signal(0);
+  pageSize = signal(10);
+
+  pageSizeOptions = [10, 20, 30];
 
   // Filters
   itemFilter = signal('');
@@ -99,6 +123,15 @@ export class ExpenseList {
 
   private normalizeDate(d: Date) {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  isRangeFilterActive = computed(() => {
+    return !!(this.fromDate() && this.toDate());
+  });
+
+  onPageChange(event: any) {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
   }
 
   openFilterDialog() {
@@ -118,10 +151,37 @@ export class ExpenseList {
     });
   }
 
+  openEditDialog(expense: Expense) {
+    const dialogRef = this.dialog.open(ExpenseEditDialog, {
+      width: '360px',
+      maxWidth: '95vw',
+      autoFocus: false,
+      panelClass: 'expense-filter-dialog',
+      data: expense
+    });
 
+    dialogRef.afterClosed().subscribe(updated => {
+      if (!updated) return;
+
+      this.expenses.update(list =>
+        list.map(e => e.id === updated.id ? updated : e)
+      );
+
+      localStorage.setItem('expenses', JSON.stringify(this.expenses()));
+    });
+  }
+
+  endOfDay(date: Date): Date {
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      23, 59, 59, 999
+    );
+  }
 
   filteredExpenses = computed(() => {
-    return this.expenses().filter(e => {
+    const list = this.expenses().filter(e => {
 
       const matchItem = this.itemFilter()
         ? e.item.toLowerCase().includes(this.itemFilter().toLowerCase())
@@ -134,8 +194,8 @@ export class ExpenseList {
       const hasRange = this.fromDate() && this.toDate();
 
       const matchDate = hasRange
-        ? new Date(e.purchaseDate) >= new Date(this.fromDate()!) &&
-        new Date(e.purchaseDate) <= new Date(this.toDate()!)
+        ? new Date(e.purchaseDate) >= this.fromDate()! &&
+        new Date(e.purchaseDate) <= this.endOfDay(this.toDate()!)
         : this.dateFilter()
           ? new Date(e.purchaseDate).toDateString() ===
           new Date(this.dateFilter()!).toDateString()
@@ -143,6 +203,36 @@ export class ExpenseList {
 
       return matchItem && matchStatus && matchDate;
     });
+
+    // Apply sorting ONLY when range filter is active
+    if (!this.isRangeFilterActive()) {
+      return list;
+    }
+
+    // SORTING
+    return [...list].sort((a, b) => {
+      switch (this.sortBy()) {
+        case 'date_desc':
+          return +new Date(b.purchaseDate) - +new Date(a.purchaseDate);
+        case 'date_asc':
+          return +new Date(a.purchaseDate) - +new Date(b.purchaseDate);
+        case 'paid_first':
+          return a.status === 'Paid' ? -1 : 1;
+        case 'due_first':
+          return a.status === 'Due' ? -1 : 1;
+        default:
+          return 0;
+      }
+    });
+  });
+
+  paginatedExpenses = computed(() => {
+    const data = this.filteredExpenses();
+
+    const start = this.pageIndex() * this.pageSize();
+    const end = start + this.pageSize();
+
+    return data.slice(start, end);
   });
 
 
@@ -211,32 +301,45 @@ export class ExpenseList {
     this.toDate.set(end);
   }
 
-  deleteExpense(index: number) {
+  toggleStatus(expense: Expense) {
+    this.expenses.update(list =>
+      list.map(e =>
+        e.id === expense.id
+          ? { ...e, status: e.status === 'Paid' ? 'Due' : 'Paid' }
+          : e
+      )
+    );
+    localStorage.setItem('expenses', JSON.stringify(this.expenses()));
+  }
+
+  deleteExpense(expense: Expense) {
     Swal.fire({
       title: 'Delete Expense?',
       text: 'This action cannot be undone',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel'
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33"
     }).then(result => {
-      if (result.isConfirmed) {
-        this.expenses.update(list => {
-          const updated = list.filter((_, i) => i !== index);
-          localStorage.setItem('expenses', JSON.stringify(updated));
-          return updated;
-        });
+      if (!result.isConfirmed) return;
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Deleted',
-          timer: 1200,
-          showConfirmButton: false
-        });
-      }
+      this.expenses.update(list =>
+        list.filter(e => e.id !== expense.id)
+      );
+
+      localStorage.setItem('expenses', JSON.stringify(this.expenses()));
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Deleted',
+        timer: 1200,
+        showConfirmButton: false
+      });
+
     });
   }
-
 
   clearFilters() {
     const today = this.normalizeDate(new Date());
@@ -253,5 +356,52 @@ export class ExpenseList {
     this.fromDate.set(null);
     this.toDate.set(null);
   }
+
+  exportExcel() {
+    const data = this.filteredExpenses().map(e => ({
+      Item: e.item,
+      Amount: e.amount,
+      Date: new Date(e.purchaseDate).toLocaleDateString(),
+      Status: e.status
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Expenses');
+
+    const buffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array'
+    });
+
+    saveAs(
+      new Blob([buffer], { type: 'application/octet-stream' }),
+      `expenses_${Date.now()}.xlsx`
+    );
+  }
+
+  exportPDF() {
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text('Expense Report', 14, 15);
+
+    const rows = this.filteredExpenses().map(e => [
+      e.item,
+      `₹ ${e.amount}`,
+      new Date(e.purchaseDate).toLocaleDateString(),
+      e.status
+    ]);
+
+    autoTable(doc, {
+      head: [['Item', 'Amount', 'Date', 'Status']],
+      body: rows,
+      startY: 25,
+      styles: { fontSize: 10 }
+    });
+
+    doc.save(`expenses_${Date.now()}.pdf`);
+  }
+
 
 }

@@ -1,0 +1,45 @@
+<h2 mat-dialog-title class="dialog-title">Edit Expense</h2>
+
+<mat-divider />
+
+<mat-dialog-content class="dialog-content">
+    <form [formGroup]="form" class="edit-form">
+        <!-- <mat-form-field appearance="outline">
+            <mat-label>Item</mat-label>
+            <input matInput formControlName="item">
+        </mat-form-field> -->
+        <mat-form-field appearance="outline">
+            <mat-label>Item</mat-label>
+            <mat-select formControlName="item">
+                <mat-option *ngFor="let item of items" [value]="item">
+                    {{ item }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Rate</mat-label>
+            <input matInput type="number" formControlName="amount">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Purchase Date</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="purchaseDate">
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status">
+                <mat-option value="Paid">Paid</mat-option>
+                <mat-option value="Due">Due</mat-option>
+            </mat-select>
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+<mat-divider />
+<mat-dialog-actions class="dialog-actions">
+  <button mat-raised-button (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="save()">Save</button>
+</mat-dialog-actions>
