@@ -15,7 +15,7 @@ export interface Expense {
   item: string;
   amount: number;
   purchaseDate: Date;
-  status: 'PAID' | 'DUE';
+  status: 'Paid' | 'Due';
 }
 
 @Component({
@@ -48,7 +48,7 @@ export class AddExpense {
       item: ['', Validators.required],
       amount: [null, [Validators.required, Validators.min(1)]],
       purchaseDate: [new Date(), Validators.required],
-      status: ['PAID', Validators.required]
+      status: ['Paid', Validators.required]
     });
   }
 
@@ -65,7 +65,7 @@ export class AddExpense {
 
     Swal.fire({
       title: "Preview Expense",
-      text: "You won't be able to revert this!",
+      text: "[ " + expense.item + " -- " + expense.amount + " -- " + expense.status + " ]",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
@@ -94,7 +94,7 @@ export class AddExpense {
       item: '',
       amount: null,
       purchaseDate: new Date(),
-      status: 'PAID'
+      status: 'Paid'
     });
   }
 
