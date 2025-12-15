@@ -16,80 +16,12 @@
         </mat-card>
     </div>
 
-    <mat-card-title class="expense-list-title">Expense Details</mat-card-title>
-
-    <mat-accordion class="filter-accordion">
-
-        <mat-expansion-panel #panel>
-            <mat-expansion-panel-header>
-                <mat-panel-title>
-                    Filters
-                </mat-panel-title>
-            </mat-expansion-panel-header>
-
-            <form [formGroup]="filterForm" class="filters">
-                <mat-form-field appearance="outline">
-                    <mat-label>Item</mat-label>
-                    <mat-select formControlName="item">
-                        <mat-option *ngFor="let item of items" [value]="item">
-                            {{ item }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                    <mat-label>Status</mat-label>
-                    <mat-select formControlName="status">
-                        <mat-option value="">All</mat-option>
-                        <mat-option value="Paid">Paid</mat-option>
-                        <mat-option value="Due">Due</mat-option>
-                    </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                    <mat-label>Purchase Date</mat-label>
-                    <input matInput [matDatepicker]="picker" formControlName="purchaseDate" />
-                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                    <mat-datepicker #picker></mat-datepicker>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                    <mat-label>From Date</mat-label>
-                    <input matInput [matDatepicker]="from" formControlName="fromDate" />
-                    <mat-datepicker-toggle matIconSuffix [for]="from"></mat-datepicker-toggle>
-                    <mat-datepicker #from></mat-datepicker>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                    <mat-label>To Date</mat-label>
-                    <input matInput [matDatepicker]="to" formControlName="toDate" />
-                    <mat-datepicker-toggle matIconSuffix [for]="to"></mat-datepicker-toggle>
-                    <mat-datepicker #to></mat-datepicker>
-                </mat-form-field>
-
-                <div class="quick-filters">
-                    <button mat-stroked-button color="primary" type="button" (click)="setToday()">
-                        Today
-                    </button>
-
-                    <button mat-stroked-button color="primary" type="button" (click)="setThisWeek()">
-                        This Week
-                    </button>
-
-                    <button mat-stroked-button color="primary" type="button" (click)="setThisMonth()">
-                        This Month
-                    </button>
-                </div>
-
-                <button mat-stroked-button color="primary" type="button" (click)="clearFilters(panel)">
-                    Clear Filters
-                </button>
-
-            </form>
-
-        </mat-expansion-panel>
-
-    </mat-accordion>
+    <mat-card-title class="expense-list-title">
+        Expense Details
+        <button mat-icon-button color="primary" (click)="openFilterDialog()">
+        <mat-icon>filter_list</mat-icon>
+    </button></mat-card-title>
+    
 
     <table mat-table [dataSource]="filteredExpenses()" class="mat-elevation-z2 full-width">
 

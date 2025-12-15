@@ -13,6 +13,9 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
+import { MatDialog } from '@angular/material/dialog';
+import { ExpenseFilterDialog } from '../expense-filter-dialog/expense-filter-dialog';
+
 
 export interface Expense {
   item: string;
@@ -45,14 +48,16 @@ export class ExpenseList {
   today = new Date();
 
   private fb = inject(FormBuilder);
+  private dialog = inject(MatDialog);
+
 
   filterForm = this.fb.group({
-  item: [''],
-  status: [''],
-  purchaseDate: [this.normalizeDate(new Date()) as Date | null],
-  fromDate: [null as Date | null],
-  toDate: [null as Date | null]
-});
+    item: [''],
+    status: [''],
+    purchaseDate: [this.normalizeDate(new Date()) as Date | null],
+    fromDate: [null as Date | null],
+    toDate: [null as Date | null]
+  });
 
 
   constructor() {
@@ -95,6 +100,24 @@ export class ExpenseList {
   private normalizeDate(d: Date) {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
+
+  openFilterDialog() {
+    this.dialog.open(ExpenseFilterDialog, {
+      width: '360px',
+      maxWidth: '95vw',
+      autoFocus: false,
+      panelClass: 'expense-filter-dialog',
+      data: {
+        form: this.filterForm,
+        items: this.items,
+        clear: () => this.clearFilters(),
+        setToday: () => this.setToday(),
+        setThisWeek: () => this.setThisWeek(),
+        setThisMonth: () => this.setThisMonth()
+      }
+    });
+  }
+
 
 
   filteredExpenses = computed(() => {
@@ -215,8 +238,9 @@ export class ExpenseList {
   }
 
 
-  clearFilters(panel?: any) {
+  clearFilters() {
     const today = this.normalizeDate(new Date());
+
     this.filterForm.reset({
       item: '',
       status: '',
@@ -224,9 +248,10 @@ export class ExpenseList {
       fromDate: null,
       toDate: null
     });
+
     this.dateFilter.set(today);
     this.fromDate.set(null);
     this.toDate.set(null);
-    panel?.close();
   }
+
 }

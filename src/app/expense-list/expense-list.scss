@@ -15,25 +15,25 @@
     padding-bottom: 5px;
 }
 
-.filter-accordion {
-    margin-top: 5px;
-    margin-bottom: 15px;
-    margin-left: 5px;
-    margin-right: 5px;
-}
+// .filter-accordion {
+//     margin-top: 5px;
+//     margin-bottom: 15px;
+//     margin-left: 5px;
+//     margin-right: 5px;
+// }
 
-.filters {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-    padding-top: 8px;
-}
+// .filters {
+//     display: grid;
+//     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+//     gap: 12px;
+//     padding-top: 8px;
+// }
 
-.quick-filters {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+// .quick-filters {
+//   display: flex;
+//   gap: 10px;
+//   flex-wrap: wrap;
+// }
 
 .full-width {
     width: 100%;
