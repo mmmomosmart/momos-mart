@@ -39,7 +39,7 @@ export class MenuItems {
 
     // Sync existing quantities from cart to products
     this.cartService.cart$.subscribe(cart => {
-      this.products.forEach(p => {
+      this.products?.forEach(p => {
         const match = cart.find(
           item => item.name === p.name && item.portion === p.portion
         );

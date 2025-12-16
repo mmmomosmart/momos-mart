@@ -1,8 +1,9 @@
-.momos-header {
+.menus-header {
   position: fixed;
-  //top: 0;
+  top: 0;
   left: 0;
-  width: 100%;  
+  right: 0;
+  width: auto;  
   height: 70px;
   z-index: 1000;
 
@@ -11,7 +12,7 @@
   gap: 11%;
   color: white;
   background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-  margin-top: 2%;
+  //margin-top: 2%;
 }
 
 .back-icon {
@@ -23,12 +24,16 @@
   margin-left: 5%;
 }
 
+.page-content {
+  padding-top: 80px;
+}
+
 .product-container {
-  margin-top: 20px;
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
   justify-content: center;
+  margin-bottom: 5px;
 }
 
 .product-card {
@@ -44,7 +49,7 @@
   flex-direction: column;
   justify-content: space-between;
   /* Push footer to bottom */
-  height: 180px;
+  //height: 180px;
   /* Adjust as needed */
 }
 

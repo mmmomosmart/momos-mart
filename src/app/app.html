@@ -1,13 +1,14 @@
 <div class="app-container">
 
-  <!-- Main content that changes with routing -->
+  <!-- Main content that changes with routing  && (cartCount > 0 || isEditInvoicePage)-->
   <div class="route-container">
     <router-outlet></router-outlet>
   </div>
 
-  <footer *ngIf="!isAdminPage" class="footer">
-    <button *ngIf="!isInvoicePage && !isAdminPage && !isEditInvoicePage" class="nextBtn" matButton="filled" [disabled]="disableBtn" (click)="goToInvoice()">
-      <span class="badge" *ngIf="cartCount > 0">
+  <!-- <footer *ngIf="!isAdminPage" class="footer">
+    <div>
+    <button *ngIf="!isInvoicePage && !isAdminPage && !isEditInvoicePage && cartCount > 0" class="nextBtn" matButton="filled" [disabled]="disableBtn" (click)="goToInvoice()">
+      <span class="badge">
         {{ cartCount }}
       </span>
       View Order
@@ -19,10 +20,48 @@
       </span>
       Save Order
     </button>
+    </div>
 
     <button *ngIf="isEditInvoicePage" class="saveBtn" matButton="filled" (click)="updateInvoiceV1()">
       Update Order
     </button>
-  </footer>
+
+    <div><h3>copyright © 2021 Momos Mart Business</h3></div>
+    
+  </footer> -->
+
+  <footer class="footer" [class.footer-visible]="!isAdminPage">
+
+  <div class="footer-actions">
+    <button *ngIf="!isInvoicePage && !isAdminPage && !isEditInvoicePage && cartCount > 0"
+            class="actionBtn"
+            matButton="filled"
+            [disabled]="disableBtn"
+            (click)="goToInvoice()">
+      <span class="badge">{{ cartCount }}</span>
+      View Order
+    </button>
+
+    <button *ngIf="isInvoicePage"
+            class="actionBtn"
+            matButton="filled"
+            (click)="showDialog()">
+      <span class="badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
+      Save Order
+    </button>
+
+    <button *ngIf="isEditInvoicePage"
+            class="actionBtn"
+            matButton="filled"
+            (click)="updateInvoiceV1()">
+      Update Order
+    </button>
+  </div>
+
+  <div class="footer-text">
+    © 2021 Momos Mart Business
+  </div>
+
+</footer>
 
 </div>

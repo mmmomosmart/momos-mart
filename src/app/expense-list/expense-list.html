@@ -4,12 +4,10 @@
             <p>Total</p>
             <h3>₹ {{ totalAmount() }}</h3>
         </mat-card>
-
         <mat-card class="summary-card">
             <p>Paid</p>
             <h3>₹ {{ paidAmount() }}</h3>
         </mat-card>
-
         <mat-card class="summary-card">
             <p>Due</p>
             <h3>₹ {{ dueAmount() }}</h3>
@@ -21,11 +19,10 @@
         <button mat-icon-button color="primary" (click)="openFilterDialog()">
             <mat-icon>filter_list</mat-icon>
         </button>
-        <button *ngIf="auth.isAdmin()" mat-icon-button color="primary" (click)="exportExcel()">
+        <button *ngIf="auth.isAdmin()" mat-icon-button color="primary" [disabled]="!filteredExpenses().length" (click)="exportExcel()">
             <mat-icon>table_view</mat-icon>
         </button>
-
-        <button *ngIf="auth.isAdmin()" mat-icon-button color="accent" (click)="exportPDF()">
+        <button *ngIf="auth.isAdmin()" mat-icon-button color="accent" [disabled]="!filteredExpenses().length" (click)="exportPDF()">
             <mat-icon>picture_as_pdf</mat-icon>
         </button>
     </mat-card-title>
@@ -50,16 +47,6 @@
             </mat-select>
         </mat-form-field>
     </div>
-
-    <!-- <mat-form-field appearance="outline" class="group-by">
-        <mat-label>Group By</mat-label>
-        <mat-select [(value)]="groupBy">
-            <mat-option value="">None</mat-option>
-            <mat-option value="date">Date</mat-option>
-            <mat-option value="item">Item</mat-option>
-            <mat-option value="status">Status</mat-option>
-        </mat-select>
-    </mat-form-field> -->
 
     <mat-accordion style="margin:5px;" *ngIf="groupBy()">
         <mat-expansion-panel *ngFor="let g of groupedExpenses()">
@@ -180,7 +167,7 @@
 
     <mat-divider />
 
-    <mat-paginator *ngIf="!groupBy()" [length]="filteredExpenses().length" [pageSize]="pageSize()"
+    <mat-paginator *ngIf="!groupBy() && filteredExpenses().length" [length]="filteredExpenses().length" [pageSize]="pageSize()"
         [pageSizeOptions]="pageSizeOptions" (page)="onPageChange($event)">
     </mat-paginator>
 

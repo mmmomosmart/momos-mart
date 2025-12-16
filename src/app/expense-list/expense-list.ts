@@ -178,6 +178,12 @@ export class ExpenseList {
       );
 
       localStorage.setItem('expenses', JSON.stringify(this.expenses()));
+      Swal.fire({
+      title: 'Saved',
+      icon: 'success',
+      timer: 1200,
+      showConfirmButton: false
+      });
     });
   }
 

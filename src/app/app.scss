@@ -4,36 +4,63 @@
 
 /* Makes the whole page use full height */
 .app-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 /* Router content should take all remaining space */
 .route-container {
-    flex: 1;
-    overflow-y: auto;
-    /* allows scrolling for page content */
+  flex: 1;
+  overflow-y: auto;
+  /* allows scrolling for page content */
 }
 
 .footer {
   position: sticky;
   bottom: 0;
-  width: 100%;
-  height: 100px;
+  left: 0;
+  right: 0;
+  width: auto;
   background: #fff;
+  max-height: 80px;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  box-shadow: 0 -4px 10px rgba(0,0,0,0.15);
+  padding: 10px 8px 6px;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.12);
   z-index: 1000;
+
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out;
+}
+.footer-visible {
+  transform: translateY(0);
 }
 
-.nextBtn, .saveBtn {
+.actionBtn {
   position: relative;
   padding: 31px 31px;
   font-size: 25px;
   background: linear-gradient(45deg, #fa6767, #b35525) !important;
+  min-width: 180px;
+}
+
+/* Button container */
+.footer-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 5px;
+}
+
+/* Footer text */
+.footer-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: mediumvioletred;
+  text-align: center;
 }
 
 /* Badge (circle count) */
@@ -41,7 +68,7 @@
   position: absolute;
   top: -35px;
   right: 44px;
-  
+
   background: red;
   color: white;
   font-size: 20px;
@@ -55,5 +82,5 @@
   align-items: center;
   justify-content: center;
 
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
