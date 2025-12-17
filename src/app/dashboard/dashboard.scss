@@ -1,5 +1,11 @@
 .dashboard-container {
-    margin: 2%;
+    //margin: 2%;
+    padding: 7px;
+}
+
+.dashboard-safe {
+    padding-top: calc(5px + env(safe-area-inset-top));
+    box-sizing: border-box;
 }
 
 .dashboard-header {
