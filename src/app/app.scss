@@ -17,13 +17,14 @@
 }
 
 .footer {
-  position: sticky;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   width: auto;
+  padding-bottom: env(safe-area-inset-bottom);
   background: #fff;
-  max-height: 80px;
+  max-height: 90px;
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   display: flex;
@@ -36,6 +37,7 @@
   transform: translateY(100%);
   transition: transform 0.3s ease-in-out;
 }
+
 .footer-visible {
   transform: translateY(0);
 }
@@ -61,6 +63,7 @@
   font-weight: 500;
   color: mediumvioletred;
   text-align: center;
+  padding-bottom: 6px;
 }
 
 /* Badge (circle count) */

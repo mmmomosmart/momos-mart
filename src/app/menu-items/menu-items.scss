@@ -3,6 +3,8 @@
   top: 0;
   left: 0;
   right: 0;
+  padding-top: env(safe-area-inset-top);
+  //height: calc(70px + env(safe-area-inset-top));
   width: auto;  
   height: 70px;
   z-index: 1000;
@@ -12,7 +14,6 @@
   gap: 11%;
   color: white;
   background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-  //margin-top: 2%;
 }
 
 .back-icon {
@@ -25,7 +26,9 @@
 }
 
 .page-content {
-  padding-top: 80px;
+  padding-top: calc(80px + env(safe-area-inset-top));
+  // padding-top: 80px;  
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
 }
 
 .product-container {

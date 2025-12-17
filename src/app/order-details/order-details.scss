@@ -1,11 +1,19 @@
 .order-details-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-top: env(safe-area-inset-top);
+    //height: calc(70px + env(safe-area-inset-top));
+    width: auto;
+    height: 70px;
+    z-index: 1000;
+
     display: flex;
     align-items: center;
     gap: 11%;
     color: white;
     background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-    border-radius: 11px;
-    margin-top: 2%;
 }
 
 .back-icon {
@@ -15,6 +23,11 @@
     border-radius: 12px;
     cursor: pointer;
     margin-left: 5%;
+}
+
+.page-content {
+    padding-top: calc(80px + env(safe-area-inset-top));
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
 }
 
 .bill-details {
@@ -42,7 +55,7 @@
 }
 
 .items {
- color: mediumvioletred;   
+    color: mediumvioletred;
 }
 
 .editIcon {

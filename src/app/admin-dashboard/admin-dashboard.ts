@@ -32,14 +32,14 @@ export class AdminDashboard {
   constructor(private printer: PrinterService, private router: Router) { }
 
   ngOnInit() {
-    if (Capacitor.isNativePlatform()) {
-      document.body.classList.add('native-app');
-    }
+    // if (Capacitor.isNativePlatform()) {
+    //   document.body.classList.add('native-app');
+    // }
   }
 
   adminMenuItems: MenuItem[] = [
     // { label: 'Dashboard', icon: 'home', route: 'dashboard', roles: ['admin', 'cashier'] },
-    { label: 'Purchase List', icon: 'inventory', route: 'purchase', roles: ['admin'] },
+    { label: 'Add Expense', icon: 'inventory', route: 'purchase', roles: ['admin'] },
     { label: 'Reports', icon: 'description', route: 'reports', roles: ['admin'] },
     { label: 'Order List', icon: 'shopping_cart', route: 'orders', roles: ['admin', 'cashier'] },
     { label: 'Expense List', icon: 'request_quote', route: 'expense-list', roles: ['admin'] },
