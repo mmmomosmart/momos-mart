@@ -39,4 +39,12 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!-- If plugin requires location for discovery on older Android -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Allow reading shared files -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- Needed ONLY for Android 9 and below -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <!-- Needed ONLY for Android 13+ and below -->
+    <uses-permission android:name="android.permission.READ_MEDIA_DOCUMENTS" />
+
+
 </manifest>

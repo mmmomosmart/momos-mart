@@ -220,61 +220,67 @@ export class App {
   }
 
   updateInvoiceV1() {
-  const currentDate = this.getCurrentDateTime().date;
+    const currentDate = this.getCurrentDateTime().date;
 
-  const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
-  const editedInvoice = JSON.parse(localStorage.getItem('editedInvoices') || '{}');
+    const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+    const editedInvoice = JSON.parse(localStorage.getItem('editedInvoices') || '{}');
 
-  const updatedInvoices = invoices.map((invoice: any) =>
-    invoice.createdOn.date === currentDate &&
-    invoice.invoiceNumber === editedInvoice.invoiceNumber
-      ? editedInvoice
-      : invoice
-  );
+    const updatedInvoices = invoices.map((invoice: any) =>
+      invoice.createdOn.date === currentDate &&
+        invoice.invoiceNumber === editedInvoice.invoiceNumber
+        ? editedInvoice
+        : invoice
+    );
 
-  // Save back to localStorage
-  localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
-  this.CartService.clearCart();
-  this.cartCount = 0;
-  this.invoiceService.isInvoiceEdited.next(false);
-  this.invoiceService.setInvoice({});
-  this.disableBtn = true;
-  this.router.navigate(['/']);
-}
+    // Save back to localStorage
+    localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
+    Swal.fire({
+      icon: "success",
+      text: "Invoice updated & saved.",
+      showConfirmButton: false,
+      timer: 1000
+    });
+    this.CartService.clearCart();
+    this.cartCount = 0;
+    this.invoiceService.isInvoiceEdited.next(false);
+    this.invoiceService.setInvoice({});
+    this.disableBtn = true;
+    this.router.navigate(['/']);
+  }
 
   updateInvoiceV2() {
-  const currentDate = this.getCurrentDateTime().date;
+    const currentDate = this.getCurrentDateTime().date;
 
-  const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
-  const editedInvoice = JSON.parse(localStorage.getItem('editedInvoices') || '{}');
+    const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+    const editedInvoice = JSON.parse(localStorage.getItem('editedInvoices') || '{}');
 
-  // 1️⃣ Extract today's invoices
-  const todaysInvoices = invoices.filter(
-    (inv: any) => inv.createdOn.date === currentDate
-  );
+    // 1️⃣ Extract today's invoices
+    const todaysInvoices = invoices.filter(
+      (inv: any) => inv.createdOn.date === currentDate
+    );
 
-  // 2️⃣ Update the edited one
-  const updatedTodaysInvoices = todaysInvoices.map((inv: any) =>
-    inv.invoiceNumber === editedInvoice.invoiceNumber
-      ? editedInvoice
-      : inv
-  );
+    // 2️⃣ Update the edited one
+    const updatedTodaysInvoices = todaysInvoices.map((inv: any) =>
+      inv.invoiceNumber === editedInvoice.invoiceNumber
+        ? editedInvoice
+        : inv
+    );
 
-  // 3️⃣ Merge back with non-today invoices
-  const nonTodaysInvoices = invoices.filter(
-    (inv: any) => inv.createdOn.date !== currentDate
-  );
+    // 3️⃣ Merge back with non-today invoices
+    const nonTodaysInvoices = invoices.filter(
+      (inv: any) => inv.createdOn.date !== currentDate
+    );
 
-  const finalInvoices = [...nonTodaysInvoices, ...updatedTodaysInvoices];
+    const finalInvoices = [...nonTodaysInvoices, ...updatedTodaysInvoices];
 
-  // 4️⃣ Save
-  localStorage.setItem('invoices', JSON.stringify(finalInvoices));
-  this.invoiceService.isInvoiceEdited.next(false);
-  this.CartService.clearCart();
-  this.cartCount = 0;
-  this.invoiceService.setInvoice({});
-  this.disableBtn = true;
-  this.router.navigate(['/']);
-}
+    // 4️⃣ Save
+    localStorage.setItem('invoices', JSON.stringify(finalInvoices));
+    this.invoiceService.isInvoiceEdited.next(false);
+    this.CartService.clearCart();
+    this.cartCount = 0;
+    this.invoiceService.setInvoice({});
+    this.disableBtn = true;
+    this.router.navigate(['/']);
+  }
 
 }

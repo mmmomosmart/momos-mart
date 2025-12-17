@@ -23,7 +23,9 @@ import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AuthService } from '../service/auth-service';
-
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 export interface Expense {
   id: string;
@@ -179,10 +181,10 @@ export class ExpenseList {
 
       localStorage.setItem('expenses', JSON.stringify(this.expenses()));
       Swal.fire({
-      title: 'Saved',
-      icon: 'success',
-      timer: 1200,
-      showConfirmButton: false
+        title: 'Saved',
+        icon: 'success',
+        timer: 1200,
+        showConfirmButton: false
       });
     });
   }
@@ -416,6 +418,14 @@ export class ExpenseList {
   }
 
   exportExcel() {
+    if (Capacitor.isNativePlatform()) {
+      this.exportExcelCapacitor();
+    } else {
+      this.exportExcelWeb();
+    }
+  }
+
+  exportExcelWeb() {
     const data = this.filteredExpenses().map(e => ({
       Item: e.item,
       Amount: e.amount,
@@ -438,7 +448,73 @@ export class ExpenseList {
     );
   }
 
+  async exportExcelCapacitor() {
+    try {
+      const worksheet = XLSX.utils.json_to_sheet(
+        this.filteredExpenses().map(e => ({
+          Item: e.item,
+          Amount: e.amount,
+          Date: new Date(e.purchaseDate).toLocaleDateString(),
+          Status: e.status
+        }))
+      );
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Expenses');
+
+      // Generate base64 Excel
+      const base64 = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'base64'
+      });
+
+      const fileName = `expenses_${Date.now()}.xlsx`;
+
+      // Write file
+      await Filesystem.writeFile({
+        path: fileName,
+        data: base64,
+        directory: Directory.Documents
+      });
+
+      // Get URI
+      const fileUri = await Filesystem.getUri({
+        directory: Directory.Documents,
+        path: fileName
+      });
+
+      // Share
+      await Share.share({
+        title: 'Expense Excel',
+        files: [fileUri.uri]
+      });
+
+    } catch (err: any) {
+      const msg = err?.message || '';
+
+      // User cancelled share → do nothing
+      if (msg.toLowerCase().includes('cancel')) {
+        return;
+      }
+      Swal.fire({
+        title: 'Export Failed',
+        titleText: msg || JSON.stringify(err),
+        icon: 'error',
+        timer: 700,
+        showConfirmButton: false
+      });
+    }
+  }
+
   exportPDF() {
+    if (Capacitor.isNativePlatform()) {
+      this.exportPdfCapacitor();
+    } else {
+      this.exportPdfWeb();
+    }
+  }
+
+  exportPdfWeb() {
     const doc = new jsPDF();
 
     doc.setFontSize(16);
@@ -461,5 +537,66 @@ export class ExpenseList {
     doc.save(`expenses_${Date.now()}.pdf`);
   }
 
+  async exportPdfCapacitor() {
+    try {
+      const doc = new jsPDF();
+
+      // Title
+      doc.setFontSize(16);
+      doc.text('Expense Report', 14, 15);
+
+      // Table data
+      const rows = this.filteredExpenses().map(e => [
+        e.item,
+        `₹ ${e.amount}`,
+        new Date(e.purchaseDate).toLocaleDateString(),
+        e.status
+      ]);
+
+      autoTable(doc, {
+        head: [['Item', 'Amount', 'Date', 'Status']],
+        body: rows,
+        startY: 25,
+        styles: { fontSize: 10 }
+      });
+
+      // Convert to base64
+      const base64 = doc.output('datauristring').split(',')[1];
+      const fileName = `expenses_${Date.now()}.pdf`;
+
+      // Write file
+      await Filesystem.writeFile({
+        path: fileName,
+        data: base64,
+        directory: Directory.Documents
+      });
+
+      // Get file URI
+      const fileUri = await Filesystem.getUri({
+        directory: Directory.Documents,
+        path: fileName
+      });
+
+      await Share.share({
+        title: 'Expense PDF',
+        files: [fileUri.uri]
+      });
+
+    } catch (err: any) {
+      const msg = err?.message || '';
+
+      // User cancelled share → do nothing
+      if (msg.toLowerCase().includes('cancel')) {
+        return;
+      }
+      Swal.fire({
+        title: 'Export Failed',
+        titleText: msg || JSON.stringify(err),
+        icon: 'error',
+        timer: 700,
+        showConfirmButton: false
+      });
+    }
+  }
 
 }

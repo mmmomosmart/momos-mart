@@ -38,30 +38,45 @@ export class UpdateInvoice {
 
   getOrderDetails() {
     const invoice = this.invoiceService.getInvoice();
-    const invoiceItems = this.invoiceService.getInvoice()?.items || [];
-    this.cartService.cart$.subscribe(items => {
-      if (items) {
-        // push newly add item before setting to dataSource
-        console.log(items);
-        invoiceItems.push(...items);
-      }
+    const invoiceItems: any = this.invoiceService.getInvoice()?.items || [];
+    this.cartService.cart$.subscribe(cartItems => {
+      if (!cartItems || !cartItems.length) return;
+
+      cartItems.forEach(cartItem => {
+        const existing = invoiceItems.find((item:any) =>
+          item.name === cartItem.name &&
+          item.portion === cartItem.portion
+        );
+
+        if (existing) {
+          existing.quantity = (existing.quantity ?? 0) + (cartItem.quantity ?? 0);
+          existing.total = existing.quantity * existing.price;
+        } else {
+          invoiceItems.push({
+            ...cartItem,
+            quantity: cartItem.quantity ?? 1,
+            total: (cartItem.quantity ?? 1) * cartItem.price
+          });
+        }
+      });
     });
-    invoice.items = invoiceItems;
-    invoice.total = invoice.items.reduce((sum: number, i: any) => sum + i.total, 0);
-    this.invoiceService.setInvoice(invoice);
-    this.mapDataSource(invoiceItems);
-  }
+
+      invoice.items = invoiceItems;
+      invoice.total = invoice.items.reduce((sum: number, i: any) => sum + i.total, 0);
+      this.invoiceService.setInvoice(invoice);
+      this.mapDataSource(invoiceItems);
+    }
 
   mapDataSource(items: Product[]) {
-    this.dataSource = items.map(item => ({
-      ...item,
-      displayName: item.portion
-        ? `${item.name} [${item.portion}]`
-        : item.name
-    }));
-    this.itemCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
-    this.total = items.reduce((sum, item) => sum + (item.total || 0), 0);
-    if (items.length === 0) this.hideActionBtns = true;
+      this.dataSource = items.map(item => ({
+        ...item,
+        displayName: item.portion
+          ? `${item.name} [${item.portion}]`
+          : item.name
+      }));
+      this.itemCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
+      this.total = items.reduce((sum, item) => sum + (item.total || 0), 0);
+      if(items.length === 0) this.hideActionBtns = true;
   }
 
   goToHome() {
