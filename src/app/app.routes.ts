@@ -35,10 +35,16 @@ export const routes: Routes = [
             .then(m => m.Login)
       },
       {
-        path: 'purchase',
+        path: 'add-expense',
         loadComponent: () =>
           import('./add-expense/add-expense')
             .then(m => m.AddExpense)
+      },
+      {
+        path:'detailed-orders',
+        loadComponent: () =>
+          import('./detailed-orders/detailed-orders')        
+            .then(m => m.DetailedOrders)
       }
     ]
   }

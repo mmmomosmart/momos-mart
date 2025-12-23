@@ -1,0 +1,102 @@
+.report-card {
+    padding: 11px;
+    margin-top: 10px;
+}
+
+.filters {
+    //   display: flex;
+    //   gap: 35px;
+
+    // display: grid;
+    // grid-auto-flow: row;
+    // grid-template-rows: repeat(3, auto);
+    // grid-auto-columns: minmax(200px, 1fr);
+    // gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 10px;
+    margin-bottom: 9px;
+}
+
+.preset-buttonss {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.filter-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 5px;
+}
+
+.preset-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.preset-buttons button {
+    flex: 1;
+    border-radius: 18px;
+    padding: 11px;
+}
+
+.empty {
+    text-align: center;
+    padding: 16px;
+    opacity: 0.7;
+}
+
+.date-header {
+    margin: 15px 11px 8px;
+    font-weight: 600;
+    color: mediumvioletred;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.items-table th,
+.items-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 6px;
+    font-size: 14px;
+}
+
+.mat-expansion-panel-header-description {
+    flex-grow: 0.25 !important;
+}
+
+mat-expansion-panel {
+    margin-bottom: 6px;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+    margin-bottom: 9px;
+}
+
+.summary-card {
+    text-align: center;
+    padding: 5px;
+    border: 1px solid mediumvioletred;
+    border-radius: 8px;
+}
+
+.summary-card p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.summary-card h3 {
+    margin: 4px 0 0;
+    color: mediumvioletred;
+}
