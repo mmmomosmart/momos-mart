@@ -58,7 +58,7 @@
 
 
     <!-- GROUPED ORDERS -->
-    <ng-container *ngFor="let g of groupedOrders()">
+    <ng-container *ngFor="let g of paginatedGroupedOrders()">
         <h3 class="date-header">
             {{ g.date }} — ₹{{ g.total }}
         </h3>
@@ -92,7 +92,16 @@
         </mat-accordion>
     </ng-container>
 
-    <div class="empty" *ngIf="!groupedOrders().length">
+    <div class="empty" *ngIf="!paginatedGroupedOrders().length">
         No orders placed.
     </div>
+
+    <mat-paginator
+  [length]="groupedOrders().length"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[5, 10, 20]"
+  (page)="onPageChange($event)">
+</mat-paginator>
+
 </mat-card>

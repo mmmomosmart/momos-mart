@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, effect, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -9,6 +9,8 @@ import { MatExpansionModule, MatExpansionPanel } from '@angular/material/expansi
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
+import { PageEvent } from '@angular/material/paginator';
+import { MatPaginatorModule } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-detailed-orders',
@@ -23,12 +25,21 @@ import { MatDividerModule } from '@angular/material/divider';
     MatInputModule,
     MatExpansionModule,
     ReactiveFormsModule,
-    MatDividerModule
+    MatDividerModule,
+    MatPaginatorModule
   ],
   templateUrl: './detailed-orders.html',
   styleUrls: ['./detailed-orders.scss']
 })
 export class DetailedOrders {
+
+  constructor() {
+  effect(() => {
+    this.filteredOrders();
+    this.pageIndex.set(0);
+  });
+}
+
 
   // ===== RAW ORDERS =====
   orders = signal<any[]>(JSON.parse(localStorage.getItem('invoices') || '[]'));
@@ -37,6 +48,23 @@ export class DetailedOrders {
   selectedDate = signal<Date | null>(new Date()); // default today
   fromDate = signal<Date | null>(null);
   toDate = signal<Date | null>(null);
+
+  pageIndex = signal(0);
+pageSize = signal(5);
+
+onPageChange(e: PageEvent) {
+  this.pageIndex.set(e.pageIndex);
+  this.pageSize.set(e.pageSize);
+}
+
+paginatedGroupedOrders = computed(() => {
+  const start = this.pageIndex() * this.pageSize();
+  const end = start + this.pageSize();
+
+  return this.groupedOrders().slice(start, end);
+});
+
+
 
  onSelectedDate(date: Date | null, panel: MatExpansionPanel) {
   if (!date) return;
