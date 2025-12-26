@@ -49,8 +49,8 @@ export class AdminDashboard {
   ];
 
   subadminMenuItems: MenuItem[] = [
-    { label: 'Purchase List', icon: 'inventory', route: 'purchase', roles: ['admin'] },
-    { label: 'Expense List', icon: 'request_quote', route: 'expense-list', roles: ['admin'] }
+    { label: 'Add Expense', icon: 'inventory', route: 'add-expense', roles: ['admin'] },
+    { label: 'Expense List', icon: 'request_quote', route: 'expense-list', roles: ['admin'] },
   ]
 
   logout() {

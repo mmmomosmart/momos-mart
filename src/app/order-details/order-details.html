@@ -2,8 +2,20 @@
     <mat-icon class="back-icon" (click)="goToHome()">arrow_back</mat-icon>
     <h1>Order Details</h1>
 </div>
-<div class="page-content">
-    <div class="invoice" *ngFor="let p of todaysInvoices">
+
+<div class="spinner-container" *ngIf="loading()">
+    <mat-progress-spinner mode="indeterminate" diameter="50">
+    </mat-progress-spinner>
+</div>
+
+<div *ngIf="!loading()" class="page-content">
+    <div class="summary">
+        <mat-card>{{ getCurrentDate() }}</mat-card>
+        <mat-card>Total: ₹ {{totalSales}}</mat-card>
+        <mat-card>Invoices: {{totalOrders}}</mat-card>
+    </div>
+    <hr />
+    <div class="invoice" *ngFor="let p of invoices_details()">
         <mat-accordion>
             <mat-expansion-panel class="bill-details" (opened)="panelOpenState.set(true)"
                 (closed)="panelOpenState.set(false)">
@@ -59,7 +71,7 @@
             </mat-expansion-panel>
         </mat-accordion>
     </div>
-    <div class="no-orders" *ngIf="!todaysInvoices.length">
+    <div class="no-orders" *ngIf="!invoices_details().length">
         No orders placed today.
     </div>
 </div>

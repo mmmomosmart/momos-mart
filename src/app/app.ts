@@ -8,6 +8,7 @@ import { PrinterService } from './service/printer-service';
 import Swal from 'sweetalert2';
 import { Capacitor } from '@capacitor/core';
 import { InvoiceService } from './service/invoice-service';
+import { FirestoreService } from './service/firestore.service';
 
 
 @Component({
@@ -21,7 +22,8 @@ export class App {
     private router: Router,
     private CartService: CartService,
     private printer: PrinterService,
-    private invoiceService: InvoiceService
+    private invoiceService: InvoiceService,
+    private fs: FirestoreService
   ) {
     // Detect route change
     this.router.events.subscribe(event => {
@@ -52,6 +54,9 @@ export class App {
       this.isInvoiceEdited = edited;
     });
     this.getCartItems();
+    // this.fs.getCollection('expenses').then(data => console.log(data));
+    // this.fs.getCollection('invoices').then(data => console.log(data));
+
   }
 
   getCartItems() {
@@ -89,10 +94,10 @@ export class App {
   }
 
   saveInvoice(printAfterSave: boolean = false) {
-    const billNumber = localStorage.getItem('invoiceNumber');
+    const invoice_number = this.invoiceService.getInvoiceNumber();
 
     const invoiceData = {
-      invoiceNumber: billNumber,
+      invoiceNumber: invoice_number,
       createdOn: {
         date: this.getCurrentDateTime().date,
         time: this.getCurrentDateTime().time
@@ -105,13 +110,15 @@ export class App {
     console.log("Created", invoiceData.createdOn.date);
 
     // Get existing invoices or empty array
-    const existingInvoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+    this.invoiceService.getSetInvoicesToLocalStorage(invoiceData);
 
-    // Push the new invoice
-    existingInvoices.push(invoiceData);
+    //this.fs.add('invoices', invoiceData);
+    this.fs.addWithId('invoices', invoiceData.invoiceNumber, invoiceData);
 
-    // Save back to localStorage
-    localStorage.setItem('invoices', JSON.stringify(existingInvoices));
+    // await this.firestoreService.addWithId('invoices', invoice.invoiceNumber, invoice);
+    // this.firestoreService.clearDateCache('invoices', invoice.createdOn.date);
+
+
 
     //print the invoice
     if (printAfterSave)
@@ -222,8 +229,9 @@ export class App {
   updateInvoiceV1() {
     const currentDate = this.getCurrentDateTime().date;
 
-    const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
-    const editedInvoice = JSON.parse(localStorage.getItem('editedInvoices') || '{}');
+    const invoices = this.invoiceService.getInvoicesFromLocalStorage('invoices');
+    const editedInvoice = this.invoiceService.getEditedInvoiceFromLocalStorage('editedInvoice');
+    console.log("ed", editedInvoice)
 
     const updatedInvoices = invoices.map((invoice: any) =>
       invoice.createdOn.date === currentDate &&
@@ -232,8 +240,13 @@ export class App {
         : invoice
     );
 
+    console.log("ud", updatedInvoices)
+    //this.fs.update('invoices', '6M8kJt8pFPdMARAoFXqz', editedInvoice)
+    this.fs.addWithId('invoices', editedInvoice.invoiceNumber, editedInvoice)
+
     // Save back to localStorage
-    localStorage.setItem('invoices', JSON.stringify(updatedInvoices));
+    this.invoiceService.setInvoicesToLocalStorage(updatedInvoices);
+
     Swal.fire({
       icon: "success",
       text: "Invoice updated & saved.",
@@ -243,7 +256,7 @@ export class App {
     this.CartService.clearCart();
     this.cartCount = 0;
     this.invoiceService.isInvoiceEdited.next(false);
-    this.invoiceService.setInvoice({});
+    this.invoiceService.setEditedInvoice({});
     this.disableBtn = true;
     this.router.navigate(['/']);
   }
@@ -251,8 +264,8 @@ export class App {
   updateInvoiceV2() {
     const currentDate = this.getCurrentDateTime().date;
 
-    const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
-    const editedInvoice = JSON.parse(localStorage.getItem('editedInvoices') || '{}');
+    const invoices = this.invoiceService.getInvoicesFromLocalStorage('invoices');
+    const editedInvoice = this.invoiceService.getEditedInvoiceFromLocalStorage('editedInvoice');
 
     // 1️⃣ Extract today's invoices
     const todaysInvoices = invoices.filter(
@@ -274,11 +287,11 @@ export class App {
     const finalInvoices = [...nonTodaysInvoices, ...updatedTodaysInvoices];
 
     // 4️⃣ Save
-    localStorage.setItem('invoices', JSON.stringify(finalInvoices));
+    this.invoiceService.setInvoicesToLocalStorage(finalInvoices);
     this.invoiceService.isInvoiceEdited.next(false);
     this.CartService.clearCart();
     this.cartCount = 0;
-    this.invoiceService.setInvoice({});
+    this.invoiceService.setEditedInvoice({});
     this.disableBtn = true;
     this.router.navigate(['/']);
   }

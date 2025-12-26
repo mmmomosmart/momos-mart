@@ -7,6 +7,7 @@ import { MatIcon } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import Swal from 'sweetalert2';
+import { InvoiceService } from '../service/invoice-service';
 
 @Component({
   selector: 'app-invoice',
@@ -18,7 +19,8 @@ import Swal from 'sweetalert2';
 export class Invoice {
   constructor(
     private router: Router,
-    private cartService: CartService) { }
+    private cartService: CartService,
+    private invoiceService: InvoiceService) { }
 
   displayedColumns: string[] = ['name', 'quantity', 'price', 'total'];
   dataSource: Product[] = [];
@@ -55,6 +57,7 @@ export class Invoice {
   }
 
   goToHome() {
+    this.cartService.clearCart();
     this.router.navigate(['/']);
   }
 
@@ -65,7 +68,7 @@ export class Invoice {
     }
   }
 
-  deleteInvoice() {
+  clearInvoice() {
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -101,7 +104,7 @@ export class Invoice {
 
     const invoiceNumber = `INV-${yyyy}${mm}${dd}-${hh}${min}${ss}`
 
-    localStorage.setItem('invoiceNumber', invoiceNumber);
+    this.invoiceService.setInvoiceNumber(invoiceNumber);
 
     return invoiceNumber;
   }

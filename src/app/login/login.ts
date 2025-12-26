@@ -62,7 +62,11 @@ export class Login {
   }
 
   showDialog(icon: SweetAlertIcon, title: string, text: string) {
-    if (icon != 'error') this.router.navigateByUrl('/admin/reports');
+    
+    if (icon != 'error') {
+      if(this.auth.isAdmin()) this.router.navigateByUrl('/admin/reports');
+      if(this.auth.isSubAdmin()) this.router.navigateByUrl('/admin/add-expense');
+    }
 
     Swal.fire({
       icon: icon,

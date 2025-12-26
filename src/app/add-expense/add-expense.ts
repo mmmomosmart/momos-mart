@@ -10,6 +10,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIcon, MatIconModule } from '@angular/material/icon';
 import Swal from 'sweetalert2';
+import { FirestoreService } from '../service/firestore.service';
+import { InvoiceService } from '../service/invoice-service';
 
 export interface Expense {
   id: string;
@@ -44,7 +46,7 @@ export class AddExpense {
 
   expenseForm!: ReturnType<FormBuilder['group']>;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private invoiceService: InvoiceService, private fs: FirestoreService) {
     this.expenseForm = this.fb.group({
       item: ['', Validators.required],
       amount: [null, [Validators.required, Validators.min(1)]],
@@ -112,14 +114,10 @@ export class AddExpense {
   }
 
   saveExpense(expense: Expense) {
-    // Get existing expenses or empty array
-    const existingInvoices = JSON.parse(localStorage.getItem('expenses') || '[]');
+    this.invoiceService.getSetExpensesToLocalStorage(expense);
 
-    // Push the new invoice
-    existingInvoices.push(expense);
-
-    // Save back to localStorage
-    localStorage.setItem('expenses', JSON.stringify(existingInvoices));
+    //this.fs.add('expenses', expense);
+    this.fs.addWithId('expenses', expense.id, expense);
   }
 }
 

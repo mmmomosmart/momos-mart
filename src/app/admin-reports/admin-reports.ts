@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -7,6 +7,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Chart, registerables } from 'chart.js';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { InvoiceService } from '../service/invoice-service';
 
 Chart.register(...registerables);
 
@@ -25,9 +26,11 @@ type ViewMode = 'WEEK' | 'MONTH' | 'YEAR';
   styleUrls: ['./admin-reports.scss']
 })
 export class AdminReports {
+  invoiceService = inject(InvoiceService);
+  constructor() {}
 
   invoices = signal<any[]>(
-    JSON.parse(localStorage.getItem('invoices') || '[]')
+    this.invoiceService.getInvoicesFromLocalStorage('invoices')
   );
 
   viewMode = signal<ViewMode>('WEEK');

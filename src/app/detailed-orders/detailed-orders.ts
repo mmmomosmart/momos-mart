@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { PageEvent } from '@angular/material/paginator';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { InvoiceService } from '../service/invoice-service';
 
 @Component({
   selector: 'app-detailed-orders',
@@ -32,6 +33,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
   styleUrls: ['./detailed-orders.scss']
 })
 export class DetailedOrders {
+  invoiceService = inject(InvoiceService);
 
   constructor() {
   effect(() => {
@@ -42,7 +44,7 @@ export class DetailedOrders {
 
 
   // ===== RAW ORDERS =====
-  orders = signal<any[]>(JSON.parse(localStorage.getItem('invoices') || '[]'));
+  orders = signal<any[]>(this.invoiceService.getInvoicesFromLocalStorage('invoices'));
 
   // ===== DATE FILTERS =====
   selectedDate = signal<Date | null>(new Date()); // default today

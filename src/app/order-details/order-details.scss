@@ -25,9 +25,33 @@
     margin-left: 5%;
 }
 
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  padding-top: calc(80px + env(safe-area-inset-top));
+}
+
 .page-content {
     padding-top: calc(80px + env(safe-area-inset-top));
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
+}
+
+.summary {
+  display: flex;
+  gap: 12px;
+  //margin-bottom: 12px;
+  margin: 0px 4px 5px;
+
+  mat-card {
+    flex: 1;
+    text-align: center;
+    padding: 12px;
+    background-color: #ff6b6b;
+    color: white;
+    font-weight: bold;
+  }
 }
 
 .bill-details {

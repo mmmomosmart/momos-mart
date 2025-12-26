@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import Swal from 'sweetalert2';
 import { InvoiceService } from '../service/invoice-service';
+import { FirestoreService } from '../service/firestore.service';
 
 @Component({
   selector: 'app-update-invoice',
@@ -20,7 +21,8 @@ export class UpdateInvoice {
   constructor(
     private router: Router,
     private cartService: CartService,
-    private invoiceService: InvoiceService) { }
+    private invoiceService: InvoiceService,
+    private firestoreService: FirestoreService) { }
 
   displayedColumns: string[] = ['name', 'quantity', 'price', 'total'];
   dataSource: Product[] = [];
@@ -37,13 +39,13 @@ export class UpdateInvoice {
   }
 
   getOrderDetails() {
-    const invoice = this.invoiceService.getInvoice();
-    const invoiceItems: any = this.invoiceService.getInvoice()?.items || [];
+    const invoice = this.invoiceService.getEditedInvoice();
+    const invoiceItems: any = this.invoiceService.getEditedInvoice()?.items || [];
     this.cartService.cart$.subscribe(cartItems => {
       if (!cartItems || !cartItems.length) return;
 
       cartItems.forEach(cartItem => {
-        const existing = invoiceItems.find((item:any) =>
+        const existing = invoiceItems.find((item: any) =>
           item.name === cartItem.name &&
           item.portion === cartItem.portion
         );
@@ -61,25 +63,27 @@ export class UpdateInvoice {
       });
     });
 
-      invoice.items = invoiceItems;
-      invoice.total = invoice.items.reduce((sum: number, i: any) => sum + i.total, 0);
-      this.invoiceService.setInvoice(invoice);
-      this.mapDataSource(invoiceItems);
-    }
+    invoice.items = invoiceItems;
+    invoice.total = invoice.items.reduce((sum: number, i: any) => sum + i.total, 0);
+    this.invoiceService.setEditedInvoice(invoice);
+    this.mapDataSource(invoiceItems);
+  }
 
   mapDataSource(items: Product[]) {
-      this.dataSource = items.map(item => ({
-        ...item,
-        displayName: item.portion
-          ? `${item.name} [${item.portion}]`
-          : item.name
-      }));
-      this.itemCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
-      this.total = items.reduce((sum, item) => sum + (item.total || 0), 0);
-      if(items.length === 0) this.hideActionBtns = true;
+    this.dataSource = items.map(item => ({
+      ...item,
+      displayName: item.portion
+        ? `${item.name} [${item.portion}]`
+        : item.name
+    }));
+    this.itemCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
+    this.total = items.reduce((sum, item) => sum + (item.total || 0), 0);
+    if (items.length === 0) this.hideActionBtns = true;
   }
 
   goToHome() {
+    this.invoiceService.isInvoiceEdited.next(false);
+    this.cartService.clearCart();
     this.router.navigate(['/']);
   }
 
@@ -90,7 +94,39 @@ export class UpdateInvoice {
     }
   }
 
-  deleteInvoice() {
+  async deleteInvoice() {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This invoice will be permanently deleted',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await this.firestoreService.deleteWithId('invoices', this.generateBillNo());
+
+      Swal.fire({
+        icon: 'success',
+        text: 'Invoice deleted',
+        timer: 1200,
+        showConfirmButton: false
+      });
+
+      this.cartService.clearCart();
+      this.goToHome();
+
+    } catch (err) {
+      Swal.fire('Delete failed', 'Please try again', 'error');
+    }
+  }
+
+  deleteInvoices() {
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -102,7 +138,7 @@ export class UpdateInvoice {
     }).then((result) => {
       if (result.isConfirmed) {
         Swal.fire({
-          text: "Invoice has been deleted !",
+          text: "Invoice deleted !",
           icon: "success",
           timer: 1500,
           showConfirmButton: false
@@ -114,14 +150,14 @@ export class UpdateInvoice {
   }
 
   generateBillNo() {
-    if (this.invoiceService.getInvoice()?.invoiceNumber) {
-      return this.invoiceService.getInvoice()?.invoiceNumber;
+    if (this.invoiceService.getEditedInvoice()?.invoiceNumber) {
+      return this.invoiceService.getEditedInvoice()?.invoiceNumber;
     }
   }
 
   getCurrentDateTime() {
-    if (this.invoiceService.getInvoice()?.createdOn) {
-      return this.invoiceService.getInvoice().createdOn.date + ' ' + this.invoiceService.getInvoice().createdOn.time;
+    if (this.invoiceService.getEditedInvoice()?.createdOn) {
+      return this.invoiceService.getEditedInvoice().createdOn.date + ' ' + this.invoiceService.getEditedInvoice().createdOn.time;
     } else {
       return '';
     }
@@ -130,15 +166,15 @@ export class UpdateInvoice {
   deleteItem(item: any) {
     console.log(item);
     console.log(this.dataSource);
-    const invoice = this.invoiceService.getInvoice();
-    const invoiceItems = this.invoiceService.getInvoice().items;
+    const invoice = this.invoiceService.getEditedInvoice();
+    const invoiceItems = this.invoiceService.getEditedInvoice().items;
     const updated = invoiceItems.filter((i: any) =>
       !(i.name === item.name && i.portion === item.portion)
     );
     invoice.items = updated;
     invoice.total = invoice.items.reduce((sum: number, i: any) => sum + i.total, 0);
     console.log(invoice);
-    this.invoiceService.setInvoice(invoice)
+    this.invoiceService.setEditedInvoice(invoice)
     this.mapDataSource(updated);
   }
 

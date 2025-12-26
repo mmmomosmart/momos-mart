@@ -7,6 +7,7 @@ import { MatIcon } from '@angular/material/icon';
 import { CartService } from '../service/cart-service';
 import { Product } from '../../menu-category/product-model';
 import { MatChipsModule } from '@angular/material/chips';
+import { InvoiceService } from '../service/invoice-service';
 
 
 @Component({
@@ -16,7 +17,7 @@ import { MatChipsModule } from '@angular/material/chips';
   styleUrl: './dashboard.scss',
 })
 export class Dashboard {
-  constructor(private router: Router, private cartService: CartService) { }
+  constructor(private router: Router, private cartService: CartService, private invoiceService: InvoiceService) { }
   currentDate: string = '';
   totalOrders: any;
   totalSales: any;
@@ -35,7 +36,7 @@ export class Dashboard {
   }
 
   getOrderStats() {
-    const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+    const invoices = this.invoiceService.getInvoicesFromLocalStorage('invoices');
 
     const todaysInvoices = invoices.filter((inv: any) =>
       inv.createdOn.date === this.currentDate

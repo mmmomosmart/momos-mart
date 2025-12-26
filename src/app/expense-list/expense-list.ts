@@ -26,6 +26,8 @@ import { AuthService } from '../service/auth-service';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { FirestoreService } from '../service/firestore.service';
+import { InvoiceService } from '../service/invoice-service';
 
 export interface Expense {
   id: string;
@@ -68,6 +70,7 @@ export class ExpenseList {
   today = new Date();
 
   auth = inject(AuthService);
+  invoiceService = inject(InvoiceService)
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
 
@@ -79,7 +82,7 @@ export class ExpenseList {
     toDate: [null as Date | null]
   });
 
-  constructor() {
+  constructor(private fs: FirestoreService) {
     const today = this.normalizeDate(new Date());
     this.dateFilter.set(today);
     this.filterForm.valueChanges.subscribe(value => {
@@ -109,7 +112,7 @@ export class ExpenseList {
     : ['item', 'amount', 'purchaseDate', 'status'];
 
   expenses = signal<Expense[]>(
-    (JSON.parse(localStorage.getItem('expenses') || '[]') as Expense[])
+    (this.invoiceService.getExpensesFromLocalStorage('expenses') as Expense[])
       .map(e => ({
         ...e,
         id: e.id ?? crypto.randomUUID()
@@ -179,7 +182,9 @@ export class ExpenseList {
         list.map(e => e.id === updated.id ? updated : e)
       );
 
-      localStorage.setItem('expenses', JSON.stringify(this.expenses()));
+      this.invoiceService.setExpensesToLocalStorage('expenses');
+      this.fs.addWithId('expenses', updated.id, updated);
+
       Swal.fire({
         title: 'Saved',
         icon: 'success',
@@ -369,7 +374,7 @@ export class ExpenseList {
           : e
       )
     );
-    localStorage.setItem('expenses', JSON.stringify(this.expenses()));
+    this.invoiceService.setExpensesToLocalStorage('expenses');
   }
 
   deleteExpense(expense: Expense) {
@@ -389,7 +394,7 @@ export class ExpenseList {
         list.filter(e => e.id !== expense.id)
       );
 
-      localStorage.setItem('expenses', JSON.stringify(this.expenses()));
+      this.invoiceService.setExpensesToLocalStorage('expenses');
 
       Swal.fire({
         icon: 'success',
