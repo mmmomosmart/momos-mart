@@ -102,6 +102,71 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   padding: 12px 16px 16px;
 }
 
+.header-dropdown .mat-mdc-text-field-wrapper {
+  background: white;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.header-dropdown .mat-mdc-form-field-infix {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  min-height: unset !important;
+}
+
+.header-dropdown .mat-mdc-select-value-text {
+  font-size: 20px !important;
+  font-weight: 500;
+}
+
+.header-dropdown .mat-mdc-select-arrow {
+  transform: scale(1.5);
+}
+
+.header-dropdown .mdc-notched-outline__leading,
+.header-dropdown .mdc-notched-outline__notch,
+.header-dropdown .mdc-notched-outline__trailing {
+  border-color: #ffffff !important;
+}
+
+.header-select-panel {
+  background-color: #ffffff !important;
+}
+
+.header-select-panel .mat-mdc-option {
+  color: mediumvioletred !important;
+  font-weight: 500 !important;
+}
+
+.header-select-panel .mat-mdc-option:hover {
+  background-color: #ff6b6b !important;
+  color: white !important;
+}
+
+.header-select-panel .mdc-list-item--selected {
+  background-color: #ff6b6b !important;
+}
+
+.header-select-panel .mdc-list-item--selected .mdc-list-item__primary-text {
+  color: #ffffff !important;
+  font-weight: 500;
+}
+
+.header-select-panel .mat-pseudo-checkbox-checked {
+  background-color: transparent  !important;
+  color: #ffffff !important;
+}
+
+/* Force tick color */
+.header-select-panel
+.mat-pseudo-checkbox-checked::after {
+  border-color: #ffffff !important;
+}
+
+
+
+
+
 
 
 

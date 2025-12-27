@@ -131,12 +131,12 @@ export class FirestoreService {
     console.log("startInvoicesByDateListener");
     const q = query(
       collection(this.db, 'invoices'),
-      where('createdOn.date', '==', date),
-      orderBy('createdOn.time', 'desc')
+      where('createdOn.date', '==', date)
     );
 
     this.invoicesByDateUnsub = onSnapshot(q, snap => {
-      const data = snap.docs.map(d => d.data());
+      const data = snap.docs.map(d => d.data()).reverse();
+      console.log(data)
       this._invoicesByDate.set(data);
     });
   }

@@ -1,6 +1,14 @@
 <div class="menus-header">
     <mat-icon class="back-icon" (click)="goToHome()">arrow_back</mat-icon>
     <h1>{{ header }}</h1>
+     <!-- DROPDOWN -->
+  <mat-form-field appearance="outline" class="header-dropdown">
+    <mat-select [(value)]="selectedOption" panelClass="header-select-panel" (selectionChange)="onCategoryChange($event.value)">
+      <mat-option *ngFor="let opt of options" [value]="opt.value">
+        {{ opt.label }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
 </div>
 
 <div class="page-content">

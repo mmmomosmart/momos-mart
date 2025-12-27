@@ -11,7 +11,7 @@
 
   display: flex;
   align-items: center;
-  gap: 11%;
+  gap: 12px;
   color: white;
   background: linear-gradient(45deg, #ff6b6b, #ff8e53);
 }
@@ -23,6 +23,12 @@
   border-radius: 12px;
   cursor: pointer;
   margin-left: 5%;
+}
+
+.header-dropdown {
+  margin-left: auto;
+  margin-right: 5%;
+  width: 151px;
 }
 
 .page-content {
