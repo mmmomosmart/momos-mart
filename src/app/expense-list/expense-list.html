@@ -1,4 +1,9 @@
-<mat-card class="expense-card">
+<div class="spinner-container" *ngIf="loading()">
+    <mat-progress-spinner mode="indeterminate" diameter="50">
+    </mat-progress-spinner>
+</div>
+
+<mat-card *ngIf="!loading()" class="expense-card">
     <div class="summary">
         <mat-card class="summary-card">
             <p>Total</p>

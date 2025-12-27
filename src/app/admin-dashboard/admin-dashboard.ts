@@ -12,6 +12,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../service/auth-service';
 import { Capacitor } from '@capacitor/core';
+import { FirestoreService } from '../service/firestore.service';
 
 interface MenuItem {
   label: string;
@@ -28,6 +29,7 @@ interface MenuItem {
 })
 export class AdminDashboard {
   auth = inject(AuthService);
+  firestoreService = inject(FirestoreService);
 
   constructor(private printer: PrinterService, private router: Router) { }
 
@@ -54,8 +56,8 @@ export class AdminDashboard {
   ]
 
   logout() {
+    this.firestoreService.stopExpensesListener();
     this.auth.logout();
-    // this.router.navigateByUrl('/admin/dashboard');
     this.router.navigateByUrl('/');
   }
 

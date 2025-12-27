@@ -1,5 +1,5 @@
 <div class="billing-header">
-    <mat-icon class="back-icon" (click)="goToHome()">arrow_back</mat-icon>
+    <mat-icon class="back-icon" (click)="goToHome('back')">arrow_back</mat-icon>
     <h1>Edit Billing Invoice</h1>
 </div>
 <div class="page-content">
@@ -9,7 +9,7 @@
 
     <div class="action-items">
         <div class="items-box">
-            <button class="action-btn" matButton="filled" (click)="goToHome()"><mat-icon
+            <button class="action-btn" matButton="filled" (click)="goToHome('add')"><mat-icon
                     class="add-icon">add_circle_outline</mat-icon>
                 Add Items</button>
             <button class="action-btn" matButton="filled" (click)="editInvoice()">

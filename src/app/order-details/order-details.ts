@@ -66,9 +66,7 @@ export class OrderDetails {
     this.loading.set(true);
     try {
       const snap = await this.firestoreService.getByDate('invoices', this.getCurrentDate());
-      //const data = await this.firestoreService.getByDateCached<any>('invoices', this.getCurrentDate());
       const data = snap.docs.map(d => d.data() as any);
-      console.log("data", data);
       this.invoices_details.set(data);
       this.totalOrders = data.length;
 
@@ -106,8 +104,6 @@ export class OrderDetails {
   }
 
   printInvoice(invoiceData: any) {
-    console.log(invoiceData);
-    //print the invoice
     this.onPrintInvoice(invoiceData);
   }
 
@@ -134,7 +130,7 @@ export class OrderDetails {
         icon: "success",
         text: "Invoice saved & printed.",
         showConfirmButton: false,
-        timer: 1500
+        timer: 1000
       });
     } catch (err: any) {
       //alert('Print failed: ' + (err?.message || JSON.stringify(err)));
@@ -143,7 +139,7 @@ export class OrderDetails {
         title: "Print Failed",
         text: err?.message || JSON.stringify(err),
         showConfirmButton: false,
-        timer: 1500
+        timer: 1000
       });
       //Swal.fire('Print failed: ' + (err?.message || JSON.stringify(err)), "", "error");
     }
@@ -178,13 +174,11 @@ export class OrderDetails {
         invoices = invoices.filter((inv: any) => inv.invoiceNumber !== invoiceNumberToDelete);
         this.invoiceService.setInvoicesToLocalStorage(invoices);
 
-        console.log("Invoice deleted successfully");
-
         //Show success alert
         Swal.fire({
           text: "Invoice has been deleted!",
           icon: "success",
-          timer: 1500,
+          timer: 1000,
           showConfirmButton: false
         });
       }

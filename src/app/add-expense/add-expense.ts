@@ -58,11 +58,8 @@ export class AddExpense {
   addExpense() {
     if (this.expenseForm.invalid) return;
     const expense = this.expenseForm.value as Expense;
-    expense.id = crypto.randomUUID();
+    expense.id = this.invoiceService.generateBillNo('EXP');
     this.expenses.update(list => [...list, expense]);
-
-    console.log("Current Expenses:", this.expenses());
-    console.log("Expense Added:", expense);
 
     const html = `
     <div style="max-width: 500px; border: 2px solid mediumvioletred; border-radius: 10px; padding: 11px; color: #d33;">
@@ -72,10 +69,10 @@ export class AddExpense {
           - ₹${expense.amount}
           | ${expense.status}
           | ${new Date(expense.purchaseDate).toLocaleDateString('en-IN', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-          })}
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })}
         </div>
     </div>`;
 
@@ -87,20 +84,11 @@ export class AddExpense {
       cancelButtonColor: "#d33",
       confirmButtonText: "Yes, save it!"
     }).then((result) => {
-      if (result.isConfirmed) {
-        this.saveExpense(expense)
-        Swal.fire({
-          title: "Saved!",
-          text: "Your expense has been saved.",
-          icon: "success",
-          timer: 1500,
-          showConfirmButton: false
-        });
+      if (!result.isConfirmed) {
         this.resetForm();
+        return;
       }
-      else {
-        this.resetForm();
-      }
+      this.saveExpense(expense);
     });
   }
 
@@ -114,10 +102,26 @@ export class AddExpense {
   }
 
   saveExpense(expense: Expense) {
-    this.invoiceService.getSetExpensesToLocalStorage(expense);
-
-    //this.fs.add('expenses', expense);
-    this.fs.addWithId('expenses', expense.id, expense);
+    //this.invoiceService.getSetExpensesToLocalStorage(expense);
+    this.fs.addWithId('expenses', expense.id, expense).then(() => {
+      Swal.fire({
+        title: "Saved!",
+        icon: "success",
+        timer: 1000,
+        showConfirmButton: false
+      });
+      this.resetForm();
+    })
+      .catch(err => {
+        Swal.fire({
+          title: "Try Again!",
+          text: "Something went wrong",
+          icon: "error",
+          timer: 1000,
+          showConfirmButton: false
+        });
+        this.resetForm();
+      });
   }
 }
 

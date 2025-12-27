@@ -1,5 +1,12 @@
-.expense-card {
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  padding-top: calc(80px + env(safe-area-inset-top));
+}
 
+.expense-card {
   margin-top: 10px;
   border: 1px solid mediumvioletred;
   border-radius: 10px;

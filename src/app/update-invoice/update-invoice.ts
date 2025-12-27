@@ -81,9 +81,11 @@ export class UpdateInvoice {
     if (items.length === 0) this.hideActionBtns = true;
   }
 
-  goToHome() {
-    this.invoiceService.isInvoiceEdited.next(false);
-    this.cartService.clearCart();
+  goToHome(action: string) {
+    if (action == 'back') {
+      this.invoiceService.isInvoiceEdited.next(false);
+      this.cartService.clearCart();
+    }
     this.router.navigate(['/']);
   }
 
@@ -119,7 +121,7 @@ export class UpdateInvoice {
       });
 
       this.cartService.clearCart();
-      this.goToHome();
+      this.goToHome('back');
 
     } catch (err) {
       Swal.fire('Delete failed', 'Please try again', 'error');
@@ -140,11 +142,11 @@ export class UpdateInvoice {
         Swal.fire({
           text: "Invoice deleted !",
           icon: "success",
-          timer: 1500,
+          timer: 1000,
           showConfirmButton: false
         });
         this.cartService.clearCart();
-        this.goToHome();
+        //this.goToHome();
       }
     });
   }
@@ -164,8 +166,6 @@ export class UpdateInvoice {
   }
 
   deleteItem(item: any) {
-    console.log(item);
-    console.log(this.dataSource);
     const invoice = this.invoiceService.getEditedInvoice();
     const invoiceItems = this.invoiceService.getEditedInvoice().items;
     const updated = invoiceItems.filter((i: any) =>
@@ -173,7 +173,6 @@ export class UpdateInvoice {
     );
     invoice.items = updated;
     invoice.total = invoice.items.reduce((sum: number, i: any) => sum + i.total, 0);
-    console.log(invoice);
     this.invoiceService.setEditedInvoice(invoice)
     this.mapDataSource(updated);
   }

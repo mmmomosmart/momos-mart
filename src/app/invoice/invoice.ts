@@ -31,7 +31,7 @@ export class Invoice {
   dateAndTime: string = '';
 
   ngOnInit() {
-    this.billNo = this.generateBillNo();
+    this.billNo = this.invoiceService.generateBillNo('INV');
     this.dateAndTime = this.getCurrentDateTime();
     this.getOrderDetails();
   }
@@ -39,7 +39,6 @@ export class Invoice {
   getOrderDetails() {
     this.cartService.cart$.subscribe(items => {
       // Modify each item before setting to dataSource
-      console.log(items);
       this.mapDataSource(items);
     });
   }
@@ -56,8 +55,8 @@ export class Invoice {
     if (items.length === 0) this.hideActionBtns = true;
   }
 
-  goToHome() {
-    this.cartService.clearCart();
+  goToHome(action: string) {
+    if (action =='back') this.cartService.clearCart();
     this.router.navigate(['/']);
   }
 
@@ -82,31 +81,13 @@ export class Invoice {
         Swal.fire({
           text: "Invoice has been deleted !",
           icon: "success",
-          timer: 1500,
+          timer: 1000,
           showConfirmButton: false
         });
         this.cartService.clearCart();
-        this.goToHome();
+        this.goToHome('add');
       }
     });
-  }
-
-  generateBillNo() {
-    const currentDate = new Date();
-
-    const yyyy = currentDate.getFullYear();
-    const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(currentDate.getDate()).padStart(2, '0');
-
-    const hh = String(currentDate.getHours()).padStart(2, '0');
-    const min = String(currentDate.getMinutes()).padStart(2, '0');
-    const ss = String(currentDate.getSeconds()).padStart(2, '0');
-
-    const invoiceNumber = `INV-${yyyy}${mm}${dd}-${hh}${min}${ss}`
-
-    this.invoiceService.setInvoiceNumber(invoiceNumber);
-
-    return invoiceNumber;
   }
 
   getCurrentDateTime() {

@@ -46,7 +46,6 @@ export class Login {
     const { username, password } = this.loginForm.value;
 
     // TODO: Replace with API authentication
-    console.log('Login clicked', { username, password });
 
     if (username?.toLowerCase() === 'admin' && password === 'admin789') {
       this.auth.loginAsAdmin();
@@ -72,7 +71,7 @@ export class Login {
       icon: icon,
       title: title,
       text: text,
-      timer: 1500,
+      timer: 1000,
       showConfirmButton: false
     });
   }

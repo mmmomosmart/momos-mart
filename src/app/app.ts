@@ -54,8 +54,6 @@ export class App {
       this.isInvoiceEdited = edited;
     });
     this.getCartItems();
-    // this.fs.getCollection('expenses').then(data => console.log(data));
-    // this.fs.getCollection('invoices').then(data => console.log(data));
 
   }
 
@@ -106,9 +104,6 @@ export class App {
       total: this.CartService.getTotal()
     };
 
-
-    console.log("Created", invoiceData.createdOn.date);
-
     // Get existing invoices or empty array
     this.invoiceService.getSetInvoicesToLocalStorage(invoiceData);
 
@@ -152,8 +147,6 @@ export class App {
 
       if (result.isConfirmed) {
         // Save & Print selected
-        console.log("Save & Print clicked");
-
         this.saveInvoice(true);
 
         //Swal.fire("Done!", "Invoice saved & printed.", "success");
@@ -161,22 +154,20 @@ export class App {
           icon: "success",
           text: "Invoice saved & printed.",
           showConfirmButton: false,
-          timer: 1500
+          timer: 1000
         });
       }
 
       else if (result.isDenied) {
         // Save only selected
-        console.log("Save clicked");
-
         this.saveInvoice(false);
 
         //Swal.fire("Saved!", "Invoice has been saved.", "success");
         Swal.fire({
           icon: "success",
-          text: "Invoice has been saved.",
+          text: "Invoice saved.",
           showConfirmButton: false,
-          timer: 1500
+          timer: 1000
         });
       }
 
@@ -202,7 +193,7 @@ export class App {
           icon: "error",
           text: "EZO Printer not found!",
           showConfirmButton: false,
-          timer: 1500
+          timer: 1000
         });
         return;
       }
@@ -221,7 +212,7 @@ export class App {
         title: "Print Failed",
         text: err?.message || JSON.stringify(err),
         showConfirmButton: false,
-        timer: 1500
+        timer: 1000
       });
     }
   }
@@ -231,7 +222,6 @@ export class App {
 
     const invoices = this.invoiceService.getInvoicesFromLocalStorage('invoices');
     const editedInvoice = this.invoiceService.getEditedInvoiceFromLocalStorage('editedInvoice');
-    console.log("ed", editedInvoice)
 
     const updatedInvoices = invoices.map((invoice: any) =>
       invoice.createdOn.date === currentDate &&
@@ -239,9 +229,7 @@ export class App {
         ? editedInvoice
         : invoice
     );
-
-    console.log("ud", updatedInvoices)
-    //this.fs.update('invoices', '6M8kJt8pFPdMARAoFXqz', editedInvoice)
+    
     this.fs.addWithId('invoices', editedInvoice.invoiceNumber, editedInvoice)
 
     // Save back to localStorage
@@ -267,26 +255,26 @@ export class App {
     const invoices = this.invoiceService.getInvoicesFromLocalStorage('invoices');
     const editedInvoice = this.invoiceService.getEditedInvoiceFromLocalStorage('editedInvoice');
 
-    // 1️⃣ Extract today's invoices
+    // Extract today's invoices
     const todaysInvoices = invoices.filter(
       (inv: any) => inv.createdOn.date === currentDate
     );
 
-    // 2️⃣ Update the edited one
+    // Update the edited one
     const updatedTodaysInvoices = todaysInvoices.map((inv: any) =>
       inv.invoiceNumber === editedInvoice.invoiceNumber
         ? editedInvoice
         : inv
     );
 
-    // 3️⃣ Merge back with non-today invoices
+    // Merge back with non-today invoices
     const nonTodaysInvoices = invoices.filter(
       (inv: any) => inv.createdOn.date !== currentDate
     );
 
     const finalInvoices = [...nonTodaysInvoices, ...updatedTodaysInvoices];
 
-    // 4️⃣ Save
+    // Save
     this.invoiceService.setInvoicesToLocalStorage(finalInvoices);
     this.invoiceService.isInvoiceEdited.next(false);
     this.CartService.clearCart();

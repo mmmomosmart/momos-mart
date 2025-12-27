@@ -40,7 +40,6 @@ export class Printer {
     return new Promise((resolve, reject) => {
       bluetoothSerial.list(
         (devices: any) => {
-          //console.log("Devices:", devices);
           //alert(JSON.stringify(devices));
           resolve(devices);
         },

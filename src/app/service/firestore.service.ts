@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import {
   getFirestore,
   collection,
@@ -17,12 +17,20 @@ import {
   where,
   orderBy
 } from 'firebase/firestore';
+import { Expense } from '../expense-list/expense-list';
 
 @Injectable({ providedIn: 'root' })
 export class FirestoreService {
   private db = getFirestore();
   private dateCache = new Map<string, any[]>();
 
+  private _expenses = signal<any[]>([]);
+  readonly expenses$ = this._expenses.asReadonly();
+
+  private expensesUnsub: (() => void) | null = null;
+
+
+  //Order Section
   private getCacheKey(collection: string, date: string) {
     return `${collection}_${date}`;
   }
@@ -57,7 +65,6 @@ export class FirestoreService {
     this.dateCache.clear();
   }
 
-
   getCollection<T>(name: string): Promise<T[]> {
     return getDocs(collection(this.db, name)).then(snapshot =>
       snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as T)
@@ -65,7 +72,6 @@ export class FirestoreService {
   }
 
   add<T>(name: string, data: T) {
-    console.log(name, data);
     return addDoc(collection(this.db, name), data as any);
   }
 
@@ -99,16 +105,12 @@ export class FirestoreService {
     return getDocs(q);
   }
 
-
   deleteWithId(collectionName: string, docId: string) {
     return deleteDoc(doc(this.db, collectionName, docId));
   }
 
-  listenByDate(
-    collectionName: string,
-    date: string,
-    callback: (data: any[]) => void
-  ) {
+  listenByDate(collectionName: string, date: string, callback: (data: any[]) => void) {
+    console.log("order");
     const q = query(
       collection(this.db, collectionName),
       where('createdOn.date', '==', date),
@@ -121,4 +123,38 @@ export class FirestoreService {
     });
   }
 
+  getExpensesRealtime(callback: (data: any[]) => void) {
+    console.log("called");
+    const q = collection(this.db, 'expenses');
+    return onSnapshot(q, snapshot => {
+      const data = snapshot.docs.map(d => d.data());
+      callback(data);
+    });
+  }
+
+  startExpensesListener() {
+    console.log("start")
+    if (this.expensesUnsub) return; // already listening
+
+    const q = collection(this.db, 'expenses');
+
+    this.expensesUnsub = onSnapshot(q, snap => {
+      const data = snap.docs.map(d => {
+        const e = d.data() as any;
+
+        return {
+          ...e,
+          purchaseDate: e['purchaseDate']?.toDate
+            ? e['purchaseDate'].toDate()
+            : new Date(e['purchaseDate'])
+        };
+      });
+      this._expenses.set(data);
+    });
+  }
+
+  stopExpensesListener() {
+    this.expensesUnsub?.();
+    this.expensesUnsub = null;
+  }
 }

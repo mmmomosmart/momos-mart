@@ -8,6 +8,24 @@ export class InvoiceService {
   private invoiceData: any;
   isInvoiceEdited = new BehaviorSubject<boolean>(false);
 
+  generateBillNo(billType : string) {
+    const currentDate = new Date();
+
+    const yyyy = currentDate.getFullYear();
+    const mm = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(currentDate.getDate()).padStart(2, '0');
+
+    const hh = String(currentDate.getHours()).padStart(2, '0');
+    const min = String(currentDate.getMinutes()).padStart(2, '0');
+    const ss = String(currentDate.getSeconds()).padStart(2, '0');
+
+    const billNumber = `${billType}-${yyyy}${mm}${dd}-${hh}${min}${ss}`
+
+    if(billType== 'INV') this.setInvoiceNumber(billNumber);
+
+    return billNumber;
+  }
+
   setEditedInvoice(invoiceData: any) {
     localStorage.setItem('editedInvoice', JSON.stringify(invoiceData));
   }

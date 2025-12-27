@@ -64,7 +64,6 @@ export class Dashboard {
   }
 
   goToAdmin() {
-    console.log('Admin clicked');
     this.router.navigate(['admin'])
   }
 }

@@ -28,6 +28,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { FirestoreService } from '../service/firestore.service';
 import { InvoiceService } from '../service/invoice-service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 export interface Expense {
   id: string;
@@ -48,6 +49,7 @@ interface ExpenseGroup {
   selector: 'app-expense-list',
   imports: [
     CommonModule,
+    MatProgressSpinnerModule,
     MatTableModule,
     MatCardModule,
     MatIconModule,
@@ -67,12 +69,13 @@ interface ExpenseGroup {
   styleUrl: './expense-list.scss',
 })
 export class ExpenseList {
-  today = new Date();
-
   auth = inject(AuthService);
-  invoiceService = inject(InvoiceService)
+  invoiceService = inject(InvoiceService);
+  firestoreService = inject(FirestoreService);
+
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  today = new Date();
 
   filterForm = this.fb.group({
     item: [''],
@@ -106,28 +109,17 @@ export class ExpenseList {
   }
 
   items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material'];
-
   displayedColumns = this.auth.isAdmin()
     ? ['item', 'amount', 'purchaseDate', 'status', 'actions']
     : ['item', 'amount', 'purchaseDate', 'status'];
 
-  expenses = signal<Expense[]>(
-    (this.invoiceService.getExpensesFromLocalStorage('expenses') as Expense[])
-      .map(e => ({
-        ...e,
-        id: e.id ?? crypto.randomUUID()
-      }))
-  );
-
+  expenses = computed(() => this.fs.expenses$());
+  loading = computed(() => this.expenses().length === 0);
   sortBy = signal<'date_desc' | 'date_asc' | 'paid_first' | 'due_first'>('date_desc');
-
   pageIndex = signal(0);
   pageSize = signal(10);
-
   pageSizeOptions = [10, 20, 30];
-
   groupBy = signal<'' | 'date' | 'item' | 'status'>('');
-
 
   // Filters
   itemFilter = signal('');
@@ -135,6 +127,10 @@ export class ExpenseList {
   dateFilter = signal<Date | null>(null);
   fromDate = signal<Date | null>(null);
   toDate = signal<Date | null>(null);
+
+  ngOnInit() {
+    this.fs.startExpensesListener();
+  }  
 
   private normalizeDate(d: Date) {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -177,18 +173,12 @@ export class ExpenseList {
 
     dialogRef.afterClosed().subscribe(updated => {
       if (!updated) return;
-
-      this.expenses.update(list =>
-        list.map(e => e.id === updated.id ? updated : e)
-      );
-
-      this.invoiceService.setExpensesToLocalStorage('expenses');
       this.fs.addWithId('expenses', updated.id, updated);
 
       Swal.fire({
         title: 'Saved',
         icon: 'success',
-        timer: 1200,
+        timer: 1000,
         showConfirmButton: false
       });
     });
@@ -246,7 +236,8 @@ export class ExpenseList {
   });
 
   filteredExpenses = computed(() => {
-    const list = this.expenses().filter(e => {
+    const list = this.expenses();
+    const filtered = list.filter(e => {
 
       const matchItem = this.itemFilter()
         ? e.item.toLowerCase().includes(this.itemFilter().toLowerCase())
@@ -271,11 +262,11 @@ export class ExpenseList {
 
     // Apply sorting ONLY when range filter is active
     if (!this.isRangeFilterActive()) {
-      return list;
+      return filtered;
     }
 
     // SORTING
-    return [...list].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       switch (this.sortBy()) {
         case 'date_desc':
           return +new Date(b.purchaseDate) - +new Date(a.purchaseDate);
@@ -367,43 +358,42 @@ export class ExpenseList {
   }
 
   toggleStatus(expense: Expense) {
-    this.expenses.update(list =>
-      list.map(e =>
-        e.id === expense.id
-          ? { ...e, status: e.status === 'Paid' ? 'Due' : 'Paid' }
-          : e
-      )
-    );
-    this.invoiceService.setExpensesToLocalStorage('expenses');
+    const updated = {
+      ...expense,
+      status: expense.status === 'Paid' ? 'Due' : 'Paid'
+    };
+    this.firestoreService.addWithId('expenses', updated.id, updated);
   }
 
-  deleteExpense(expense: Expense) {
-    Swal.fire({
-      title: 'Delete Expense?',
-      text: 'This action cannot be undone',
+  async deleteExpense(expense: Expense) {
+    const expenseId = expense.id;
+
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This expense will be permanently deleted',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel',
       confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33"
-    }).then(result => {
-      if (!result.isConfirmed) return;
+      cancelButtonColor: "#d33",
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel'
+    });
 
-      this.expenses.update(list =>
-        list.filter(e => e.id !== expense.id)
-      );
+    if (!result.isConfirmed) return;
 
-      this.invoiceService.setExpensesToLocalStorage('expenses');
+    try {
+      await this.firestoreService.deleteWithId('expenses', expenseId);
 
       Swal.fire({
         icon: 'success',
-        title: 'Deleted',
+        text: 'Invoice deleted',
         timer: 1200,
         showConfirmButton: false
       });
 
-    });
+    } catch (err) {
+      Swal.fire('Delete failed', 'Please try again', 'error');
+    }
   }
 
   clearFilters() {
