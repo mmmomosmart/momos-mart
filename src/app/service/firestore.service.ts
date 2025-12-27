@@ -26,8 +26,11 @@ export class FirestoreService {
 
   private _expenses = signal<any[]>([]);
   readonly expenses$ = this._expenses.asReadonly();
-
   private expensesUnsub: (() => void) | null = null;
+
+  private _invoicesByDate = signal<any[]>([]);
+  readonly invoicesByDate$ = this._invoicesByDate.asReadonly();
+  private invoicesByDateUnsub: (() => void) | null = null;
 
 
   //Order Section
@@ -110,7 +113,7 @@ export class FirestoreService {
   }
 
   listenByDate(collectionName: string, date: string, callback: (data: any[]) => void) {
-    console.log("order");
+    console.log("Invoices db called");
     const q = query(
       collection(this.db, collectionName),
       where('createdOn.date', '==', date),
@@ -123,18 +126,30 @@ export class FirestoreService {
     });
   }
 
-  getExpensesRealtime(callback: (data: any[]) => void) {
-    console.log("called");
-    const q = collection(this.db, 'expenses');
-    return onSnapshot(q, snapshot => {
-      const data = snapshot.docs.map(d => d.data());
-      callback(data);
+  startInvoicesByDateListener(date: string) {
+    if (this.invoicesByDateUnsub) return;
+    console.log("startInvoicesByDateListener");
+    const q = query(
+      collection(this.db, 'invoices'),
+      where('createdOn.date', '==', date),
+      orderBy('createdOn.time', 'desc')
+    );
+
+    this.invoicesByDateUnsub = onSnapshot(q, snap => {
+      const data = snap.docs.map(d => d.data());
+      this._invoicesByDate.set(data);
     });
   }
 
+  stopInvoicesByDateListener() {
+    this.invoicesByDateUnsub?.();
+    this.invoicesByDateUnsub = null;
+  }
+
   startExpensesListener() {
-    console.log("start")
     if (this.expensesUnsub) return; // already listening
+    
+    console.log("Expenses db called")
 
     const q = collection(this.db, 'expenses');
 

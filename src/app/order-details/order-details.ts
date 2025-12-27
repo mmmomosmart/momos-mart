@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIcon } from '@angular/material/icon';
 import { Router } from '@angular/router';
@@ -36,55 +36,64 @@ export class OrderDetails {
   totalSales: any;
   readonly panelOpenState = signal(false);
   displayedColumns: string[] = ['name', 'portion', 'quantity', 'price'];
-  invoices_details = signal<any[]>([]);
-  loading = signal<boolean>(false);
+  // invoices_details = signal<any[]>([]);
+  // loading = signal<boolean>(false);
+  invoices_details = computed(() => this.firestoreService.invoicesByDate$());
+  loading = computed(() => this.invoices_details().length === 0);
   private unsubscribe?: () => void;
 
 
   ngOnInit() {
     //this.loadInvoices();
 
-    this.loading.set(true);
+    // this.loading.set(true);
 
-    this.unsubscribe = this.firestoreService.listenByDate(
-      'invoices',
-      this.getCurrentDate(),
-      (data) => {
-        this.invoices_details.set(data);
-        this.loading.set(false);
-        this.totalOrders = data.length;
+    // this.unsubscribe = this.firestoreService.listenByDate(
+    //   'invoices',
+    //   this.getCurrentDate(),
+    //   (data) => {
+    //     this.invoices_details.set(data);
+    //     this.loading.set(false);
+    //     this.totalOrders = data.length;
 
-        this.totalSales = data.reduce((sum: number, invoice: any) => {
-          const invoiceTotal = invoice.items.reduce((t: number, item: any) => t + item.total, 0);
-          return sum + invoiceTotal;
-        }, 0);
-      }
-    );
+    //     this.totalSales = data.reduce((sum: number, invoice: any) => {
+    //       const invoiceTotal = invoice.items.reduce((t: number, item: any) => t + item.total, 0);
+    //       return sum + invoiceTotal;
+    //     }, 0);
+    //   }
+    // );
+    this.firestoreService.startInvoicesByDateListener(this.getCurrentDate());
+    this.totalOrders = this.invoices_details().length;
+    this.totalSales = this.invoices_details().reduce((sum: number, invoice: any) => {
+      const invoiceTotal = invoice.items.reduce((t: number, item: any) => t + item.total, 0);
+      return sum + invoiceTotal;
+    }, 0);
   }
 
-  async loadInvoices() {
-    this.loading.set(true);
-    try {
-      const snap = await this.firestoreService.getByDate('invoices', this.getCurrentDate());
-      const data = snap.docs.map(d => d.data() as any);
-      this.invoices_details.set(data);
-      this.totalOrders = data.length;
+  // async loadInvoices() {
+  //   this.loading.set(true);
+  //   try {
+  //     const snap = await this.firestoreService.getByDate('invoices', this.getCurrentDate());
+  //     const data = snap.docs.map(d => d.data() as any);
+  //     this.invoices_details.set(data);
+  //     this.totalOrders = data.length;
 
-      this.totalSales = data.reduce((sum: number, invoice: any) => {
-        const invoiceTotal = invoice.items.reduce((t: number, item: any) => t + item.total, 0);
-        return sum + invoiceTotal;
-      }, 0);
-    } catch (err) {
-      console.error('Failed to load invoices', err);
-    } finally {
-      this.loading.set(false);
-    }
-  }
+  //     this.totalSales = data.reduce((sum: number, invoice: any) => {
+  //       const invoiceTotal = invoice.items.reduce((t: number, item: any) => t + item.total, 0);
+  //       return sum + invoiceTotal;
+  //     }, 0);
+  //   } catch (err) {
+  //     console.error('Failed to load invoices', err);
+  //   } finally {
+  //     this.loading.set(false);
+  //   }
+  // }
 
   ngOnDestroy() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-    }
+    // if (this.unsubscribe) {
+    //   this.unsubscribe();
+    // }
+    this.firestoreService.stopInvoicesByDateListener();
   }
 
 
