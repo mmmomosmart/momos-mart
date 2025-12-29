@@ -1,35 +1,9 @@
-<!-- <mat-card class="report-card">
-  <h2>Total Sales Report</h2>
+<div class="spinner-container" *ngIf="loading()">
+    <mat-progress-spinner mode="indeterminate" diameter="50">
+    </mat-progress-spinner>
+</div>
 
-  <div class="summary">
-    <h3>Grand Total</h3>
-    <h2>₹ {{ grandTotal() }}</h2>
-  </div>
-
-  <canvas
-    baseChart
-    [data]="chartData()"
-    [type]="chartType"
-    [options]="chartOptions">
-  </canvas>
-</mat-card> -->
-<!-- <mat-card>
-  <h2>Sales Report</h2>
-
-  <div class="filters">
-    <button mat-button (click)="salesView.set('WEEK')">This Week</button>
-    <button mat-button (click)="salesView.set('MONTH')">This Month</button>
-    <button mat-button (click)="salesView.set('YEAR')">This Year</button>
-  </div>
-
-  <canvas
-    baseChart
-    [type]="'bar'"
-    [data]="chartData()"
-    [options]="chartOptions">
-  </canvas>
-</mat-card> -->
-<mat-card class="reports">
+<mat-card *ngIf="!loading()" class="reports">
   <h2 style="color: mediumvioletred;">Sales Report</h2>
 
   <!-- SUMMARY -->
@@ -44,7 +18,7 @@
     <button mat-raised-button (click)="viewMode.set('WEEK')">This Week</button>
     <button mat-raised-button (click)="viewMode.set('MONTH')">This Month</button>
     <button mat-raised-button (click)="viewMode.set('YEAR')">This Year</button>
-    <!-- <button mat-raised-button (click)="exportPDF()">Export PDF</button> -->
+    <button mat-raised-button (click)="exportInvoicesPDF()">Export PDF</button>
   </div>
 
   <!-- CHART -->
@@ -56,23 +30,5 @@
       [options]="chartOptions">
     </canvas>
   </div>
-
-  <!-- CLICK RESULT -->
-  <!-- <mat-expansion-panel *ngIf="selectedBucket()">
-    <mat-expansion-panel-header>
-      Orders for {{ selectedBucket() }}
-    </mat-expansion-panel-header>
-
-    <table class="orders">
-      <tr>
-        <th>Invoice</th>
-        <th>Total</th>
-      </tr>
-      <tr *ngFor="let o of bucketOrders()">
-        <td>{{ o.invoiceNumber }}</td>
-        <td>₹{{ o.total }}</td>
-      </tr>
-    </table>
-  </mat-expansion-panel> -->
 </mat-card>
 

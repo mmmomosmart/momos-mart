@@ -8,6 +8,10 @@ import { Chart, registerables } from 'chart.js';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { InvoiceService } from '../service/invoice-service';
+import { FirestoreService } from '../service/firestore.service';
+import Swal from 'sweetalert2';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import * as XLSX from 'xlsx';
 
 Chart.register(...registerables);
 
@@ -17,6 +21,7 @@ type ViewMode = 'WEEK' | 'MONTH' | 'YEAR';
   selector: 'app-admin-reports',
   imports: [
     CommonModule,
+    MatProgressSpinnerModule,
     MatCardModule,
     MatButtonModule,
     MatExpansionModule,
@@ -27,14 +32,41 @@ type ViewMode = 'WEEK' | 'MONTH' | 'YEAR';
 })
 export class AdminReports {
   invoiceService = inject(InvoiceService);
-  constructor() {}
+  firestoreService = inject(FirestoreService);
 
-  invoices = signal<any[]>(
+  constructor() { }
+
+  invoice_details = signal<any[]>(
     this.invoiceService.getInvoicesFromLocalStorage('invoices')
   );
 
+  invoices = signal<any[]>([]);
+  loading = signal<boolean>(false);
+
   viewMode = signal<ViewMode>('WEEK');
   selectedBucket = signal<string | null>(null);
+
+  async ngOnInit() {
+    await this.loadOrders();
+  }
+
+  async loadOrders() {
+    try {
+      this.loading.set(true);
+      const data = await this.firestoreService.getCollection<any>('invoices');
+      console.log(data)
+      this.invoices.set(data);
+    } catch (err) {
+      Swal.fire({
+        icon: "warning",
+        text: "Invalid quantity.",
+        showConfirmButton: false,
+        timer: 1000
+      });
+    } finally {
+      this.loading.set(false);
+    }
+  }
 
   // ---------- DATE HELPERS ----------
   parseDate(o: any): Date {
@@ -56,7 +88,7 @@ export class AdminReports {
   }
 
   monthName(i: number) {
-    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][i];
+    return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i];
   }
 
   // ---------- AGGREGATION ----------
@@ -64,7 +96,7 @@ export class AdminReports {
     const map = new Map<string, number>();
     const now = new Date();
 
-    for (const inv of this.invoices()) {
+    for (const inv of this.filteredInvoices()) {
       const d = this.parseDate(inv);
 
       if (this.viewMode() === 'WEEK') {
@@ -88,6 +120,7 @@ export class AdminReports {
       }
     }
 
+    console.log(Array.from(map.entries()))
     return Array.from(map.entries());
   });
 
@@ -98,7 +131,7 @@ export class AdminReports {
       label: 'Sales ₹',
       data: this.aggregated().map(x => x[1]),
       backgroundColor: '#ff6b6b',
-      borderColor:'#FFFFFF',
+      borderColor: '#FFFFFF',
       borderWidth: 1,
       borderRadius: 6
     }]
@@ -113,38 +146,47 @@ export class AdminReports {
     }
   };
 
-  // ---------- SUMMARY ----------
-  totalSales = computed(() =>
-    this.aggregated().reduce((s, x) => s + x[1], 0)
-  );
-
-  totalInvoices = computed(() => this.invoices().length);
-
-  avgSale = computed(() =>
-    this.totalInvoices() ? Math.round(this.totalSales() / this.totalInvoices()) : 0
-  );
-
-  // ---------- BAR CLICK → ORDERS ----------
-  bucketOrders = computed(() => {
-    if (!this.selectedBucket()) return [];
-    const bucket = this.selectedBucket()!;
+  filteredInvoices = computed(() => {
     const now = new Date();
 
     return this.invoices().filter(inv => {
       const d = this.parseDate(inv);
 
-      if (this.viewMode() === 'WEEK')
-        return d.toLocaleDateString('en-US', { weekday: 'short' }) === bucket;
+      if (this.viewMode() === 'WEEK') {
+        const s = this.startOfWeek(now);
+        const e = new Date(s); e.setDate(s.getDate() + 6);
+        return d >= s && d <= e;
+      }
 
-      if (this.viewMode() === 'MONTH')
-        return `Week ${this.weekOfMonth(d)}` === bucket;
+      if (this.viewMode() === 'MONTH') {
+        return (
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        );
+      }
 
-      if (this.viewMode() === 'YEAR')
-        return this.monthName(d.getMonth()) === bucket;
+      if (this.viewMode() === 'YEAR') {
+        return d.getFullYear() === now.getFullYear();
+      }
 
-      return false;
+      return true;
     });
   });
+
+
+  // ---------- SUMMARY ----------
+  totalSales = computed(() =>
+    this.filteredInvoices().reduce((s, inv) => s + inv.total, 0)
+  );
+
+  totalInvoices = computed(() => this.filteredInvoices().length);
+
+  avgSale = computed(() =>
+    this.totalInvoices()
+      ? Math.round(this.totalSales() / this.totalInvoices())
+      : 0
+  );
+
 
   // ---------- EXPORT ----------
   exportPDF() {
@@ -155,4 +197,48 @@ export class AdminReports {
       pdf.save('sales-report.pdf');
     });
   }
+
+  exportInvoicesPDF() {
+    const pdf = new jsPDF();
+    let y = 10;
+
+    pdf.setFontSize(14);
+    pdf.text('Sales Report', 10, y);
+    y += 10;
+
+    pdf.setFontSize(10);
+
+    this.filteredInvoices().forEach((inv, i) => {
+      pdf.text(
+        `${i + 1}. ${inv.invoiceNumber} | ${inv.createdOn.date} | ₹${inv.total}`,
+        10,
+        y
+      );
+      y += 7;
+
+      y += 4;
+    });
+
+    y += 5;
+    pdf.setFontSize(12);
+    pdf.text(`Total Sales: ₹${this.totalSales()}`, 10, y);
+
+    pdf.save('filtered-invoices.pdf');
+  }
+
+  exportInvoicesExcel() {
+    const rows = this.filteredInvoices().map(inv => ({
+      Invoice: inv.invoiceNumber,
+      Date: inv.createdOn.date,
+      Items: inv.items.length,
+      Total: inv.total
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Invoices');
+
+    XLSX.writeFile(wb, 'filtered-invoices.xlsx');
+  }
+
 }

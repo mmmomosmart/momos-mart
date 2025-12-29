@@ -1,3 +1,11 @@
+ .spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  padding-top: calc(80px + env(safe-area-inset-top));
+}
+
 .reports {
     margin-top: 11px;
     padding: 5px;

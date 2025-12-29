@@ -12,12 +12,16 @@ import { MatDividerModule } from '@angular/material/divider';
 import { PageEvent } from '@angular/material/paginator';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { InvoiceService } from '../service/invoice-service';
+import { FirestoreService } from '../service/firestore.service';
+import Swal from 'sweetalert2';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-detailed-orders',
   standalone: true,
   imports: [
     CommonModule,
+    MatProgressSpinnerModule,
     MatCardModule,
     MatButtonModule,
     MatDatepickerModule,
@@ -34,17 +38,21 @@ import { InvoiceService } from '../service/invoice-service';
 })
 export class DetailedOrders {
   invoiceService = inject(InvoiceService);
+  firestoreService = inject(FirestoreService);
 
   constructor() {
-  effect(() => {
-    this.filteredOrders();
-    this.pageIndex.set(0);
-  });
-}
+    effect(() => {
+      this.filteredOrders();
+      this.pageIndex.set(0);
+    });
+  }
 
 
   // ===== RAW ORDERS =====
-  orders = signal<any[]>(this.invoiceService.getInvoicesFromLocalStorage('invoices'));
+  //orders = signal<any[]>(this.invoiceService.getInvoicesFromLocalStorage('invoices'));
+  orders = signal<any[]>([]);
+  loading = signal<boolean>(false);
+
 
   // ===== DATE FILTERS =====
   selectedDate = signal<Date | null>(new Date()); // default today
@@ -52,66 +60,85 @@ export class DetailedOrders {
   toDate = signal<Date | null>(null);
 
   pageIndex = signal(0);
-pageSize = signal(5);
+  pageSize = signal(5);
 
-onPageChange(e: PageEvent) {
-  this.pageIndex.set(e.pageIndex);
-  this.pageSize.set(e.pageSize);
-}
+  async ngOnInit() {
+    await this.loadOrders();
+  }
 
-paginatedGroupedOrders = computed(() => {
-  const start = this.pageIndex() * this.pageSize();
-  const end = start + this.pageSize();
+  async loadOrders() {
+    try {
+      this.loading.set(true);
+      const data = await this.firestoreService.getCollection<any>('invoices');
+      this.orders.set(data);
+    } catch (err) {
+      Swal.fire({
+        icon: "warning",
+        text: "Invalid quantity.",
+        showConfirmButton: false,
+        timer: 1000
+      });
+    } finally {
+      this.loading.set(false);
+    }
+  }
 
-  return this.groupedOrders().slice(start, end);
-});
+  onPageChange(e: PageEvent) {
+    this.pageIndex.set(e.pageIndex);
+    this.pageSize.set(e.pageSize);
+  }
 
+  paginatedGroupedOrders = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    const end = start + this.pageSize();
 
+    return this.groupedOrders().slice(start, end);
+  });
 
- onSelectedDate(date: Date | null, panel: MatExpansionPanel) {
-  if (!date) return;
+  onSelectedDate(date: Date | null, panel: MatExpansionPanel) {
+    if (!date) return;
 
-  this.selectedDate.set(date);
-  this.fromDate.set(null);
-  this.toDate.set(null);
+    this.selectedDate.set(date);
+    this.fromDate.set(null);
+    this.toDate.set(null);
 
-  panel.close();
-}
-
-onFromDateChange(date: Date | null, panel: MatExpansionPanel) {
-  this.fromDate.set(date);
-
-  // clear single date
-  //this.selectedDate.set(null);
-
-  // only close when BOTH dates are selected
-  if (this.fromDate() && this.toDate()) {
     panel.close();
   }
-}
 
-onToDateChange(date: Date | null, panel: MatExpansionPanel) {
-  this.toDate.set(date);
+  onFromDateChange(date: Date | null, panel: MatExpansionPanel) {
+    this.fromDate.set(date);
 
-  // clear single date
-  //this.selectedDate.set(null);
+    // clear single date
+    //this.selectedDate.set(null);
 
-  // only close when BOTH dates are selected
-  if (this.fromDate() && this.toDate()) {
-    this.selectedDate.set(null);
+    // only close when BOTH dates are selected
+    if (this.fromDate() && this.toDate()) {
+      panel.close();
+    }
+  }
+
+  onToDateChange(date: Date | null, panel: MatExpansionPanel) {
+    this.toDate.set(date);
+
+    // clear single date
+    //this.selectedDate.set(null);
+
+    // only close when BOTH dates are selected
+    if (this.fromDate() && this.toDate()) {
+      this.selectedDate.set(null);
+      panel.close();
+    }
+  }
+
+  resetFilters(panel: MatExpansionPanel) {
+    // reset to today
+    this.selectedDate.set(new Date());
+
+    // clear range
+    this.fromDate.set(null);
+    this.toDate.set(null);
     panel.close();
   }
-}
-
-resetFilters(panel: MatExpansionPanel) {
-  // reset to today
-  this.selectedDate.set(new Date());
-
-  // clear range
-  this.fromDate.set(null);
-  this.toDate.set(null);
-  panel.close();
-}
 
 
   // ===== DATE PARSER =====
@@ -168,49 +195,49 @@ resetFilters(panel: MatExpansionPanel) {
   }
 
   private startOfDay(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
 
-private startOfWeek(d: Date) {
-  const day = d.getDay(); // 0 = Sunday
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday start
-  return new Date(d.getFullYear(), d.getMonth(), diff);
-}
+  private startOfWeek(d: Date) {
+    const day = d.getDay(); // 0 = Sunday
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+    return new Date(d.getFullYear(), d.getMonth(), diff);
+  }
 
-setYesterday(panel: MatExpansionPanel) {
-  const y = new Date();
-  y.setDate(y.getDate() - 1);
+  setYesterday(panel: MatExpansionPanel) {
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
 
-  this.selectedDate.set(this.startOfDay(y));
-  this.fromDate.set(null);
-  this.toDate.set(null);
+    this.selectedDate.set(this.startOfDay(y));
+    this.fromDate.set(null);
+    this.toDate.set(null);
 
-  panel.close();
-}
+    panel.close();
+  }
 
-setThisWeek(panel: MatExpansionPanel) {
-  const today = this.startOfDay(new Date());
+  setThisWeek(panel: MatExpansionPanel) {
+    const today = this.startOfDay(new Date());
 
-  this.selectedDate.set(null); // IMPORTANT
-  this.fromDate.set(this.startOfWeek(today));
-  this.toDate.set(today);
+    this.selectedDate.set(null); // IMPORTANT
+    this.fromDate.set(this.startOfWeek(today));
+    this.toDate.set(today);
 
-  panel.close();
-}
+    panel.close();
+  }
 
-private startOfMonth(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
+  private startOfMonth(d: Date) {
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  }
 
-setThisMonth(panel: MatExpansionPanel) {
-  const today = this.startOfDay(new Date());
+  setThisMonth(panel: MatExpansionPanel) {
+    const today = this.startOfDay(new Date());
 
-  this.selectedDate.set(null);
-  this.fromDate.set(this.startOfMonth(today));
-  this.toDate.set(today);
+    this.selectedDate.set(null);
+    this.fromDate.set(this.startOfMonth(today));
+    this.toDate.set(today);
 
-  panel.close();
-}
+    panel.close();
+  }
 
 
 }

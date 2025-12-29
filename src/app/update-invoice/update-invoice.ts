@@ -130,9 +130,9 @@ export class UpdateInvoice {
   }
 
   onQuantityChange(item: any) {
-    if (!item.quantity || item.quantity < 1) {
-      item.quantity = 1;
-    }
+    // if (!item.quantity || item.quantity < 1) {
+    //   item.quantity = 1;
+    // }
 
     // Update row total
     item.total = item.quantity * item.price;

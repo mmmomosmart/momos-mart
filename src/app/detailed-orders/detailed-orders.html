@@ -1,4 +1,9 @@
-<mat-card class="report-card">
+<div class="spinner-container" *ngIf="loading()">
+    <mat-progress-spinner mode="indeterminate" diameter="50">
+    </mat-progress-spinner>
+</div>
+
+<mat-card *ngIf="!loading()" class="report-card">
     <!-- <h2>Order Report</h2> -->
 
     <div class="summary" align:center>

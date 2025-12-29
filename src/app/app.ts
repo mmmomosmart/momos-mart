@@ -229,7 +229,19 @@ export class App {
         ? editedInvoice
         : invoice
     );
-    
+
+    const hasInvalidQuantity = editedInvoice.items.some((item: any) => !item.quantity || item.quantity < 1);
+    if (hasInvalidQuantity) {
+      //Swal.fire('Invalid quantity', 'Quantity must be at least 1', 'warning');
+      Swal.fire({
+          icon: "warning",
+          text: "Invalid quantity.",
+          showConfirmButton: false,
+          timer: 1000
+        });
+      return;
+    }
+
     this.fs.addWithId('invoices', editedInvoice.invoiceNumber, editedInvoice)
 
     // Save back to localStorage

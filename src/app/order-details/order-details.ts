@@ -37,16 +37,16 @@ export class OrderDetails {
   readonly panelOpenState = signal(false);
   displayedColumns: string[] = ['name', 'portion', 'quantity', 'price'];
   // invoices_details = signal<any[]>([]);
-  // loading = signal<boolean>(false);
+  loading = signal<boolean>(false);
   invoices_details = computed(() => this.firestoreService.invoicesByDate$());
-  loading = computed(() => this.invoices_details().length === 0);
+  //loading = computed(() => this.invoices_details().length === 0);
   private unsubscribe?: () => void;
 
 
   ngOnInit() {
     //this.loadInvoices();
 
-    // this.loading.set(true);
+    this.loading.set(true);
 
     // this.unsubscribe = this.firestoreService.listenByDate(
     //   'invoices',
@@ -63,6 +63,7 @@ export class OrderDetails {
     //   }
     // );
     this.firestoreService.startInvoicesByDateListener(this.getCurrentDate());
+    if(this.invoices_details()) this.loading.set(false);
     this.totalOrders = this.invoices_details().length;
     this.totalSales = this.invoices_details().reduce((sum: number, invoice: any) => {
       const invoiceTotal = invoice.items.reduce((t: number, item: any) => t + item.total, 0);
