@@ -75,6 +75,19 @@ table {
     cursor: pointer;
 }
 
+.quantity{
+    width: 50px !important;
+    padding: 5px;
+    border: 2px solid mediumvioletred;
+    border-radius: 4px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .subTotal {
     font-size: 30px;
     color:mediumvioletred;

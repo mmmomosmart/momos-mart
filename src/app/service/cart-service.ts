@@ -11,9 +11,7 @@ export class CartService {
 
   constructor() { }
 
-  // ---------------------------
   // Add product (+ button)
-  // ---------------------------
   addProduct(product: Product) {
     const cart = this.cartSource.value;
 
@@ -35,9 +33,7 @@ export class CartService {
     }
   }
 
-  // ---------------------------
   // Remove one (- button)
-  // ---------------------------
   removeOne(product: Product) {
     const cart = [...this.cartSource.value];
 
@@ -60,16 +56,16 @@ export class CartService {
   }
 
   //remove when cliskedon delete button
-  removeItem(product: Product) {    
-    const updated = this.cartSource.value.filter(i =>
-      !(i.name === product.name && i.portion === product.portion)
-    );
-    this.cartSource.next(updated);
+  removeItem(product: Product) {
+    if (product.name != null) {
+      const updated = this.cartSource.value.filter(i =>
+        !(i.name === product.name && i.portion === product.portion)
+      );
+      this.cartSource.next(updated);
+    }
   }
 
-  // ---------------------------
   // NEW: Update to a specific quantity
-  // ---------------------------
   updateQuantity(product: Product, qty: number) {
     if (qty <= 0) {
       this.removeOne({ ...product, quantity: 1 });
@@ -96,25 +92,19 @@ export class CartService {
     }
   }
 
-  // ---------------------------
   // Clear all
-  // ---------------------------
   clearCart() {
     this.cartSource.next([]);
   }
 
-  // ---------------------------
   // Total price
-  // ---------------------------
   getTotal(): number {
     return this.cartSource.value.reduce((sum, item) => {
       return sum + (item.total ?? item.price);
     }, 0);
   }
 
-  // ---------------------------
   // Get total cart items (for footer badge)
-  // ---------------------------
   getItemCount(): number {
     return this.cartSource.value.reduce((sum, item) => {
       return sum + (item.quantity ?? 0);

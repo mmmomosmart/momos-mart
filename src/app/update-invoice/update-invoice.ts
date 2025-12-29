@@ -9,10 +9,11 @@ import { MatButtonModule } from '@angular/material/button';
 import Swal from 'sweetalert2';
 import { InvoiceService } from '../service/invoice-service';
 import { FirestoreService } from '../service/firestore.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-update-invoice',
-  imports: [CommonModule, MatTableModule, MatIcon, MatButtonModule],
+  imports: [CommonModule, MatTableModule, MatIcon, MatButtonModule, FormsModule],
   templateUrl: './update-invoice.html',
   styleUrl: './update-invoice.scss',
 })
@@ -24,7 +25,7 @@ export class UpdateInvoice {
     private invoiceService: InvoiceService,
     private firestoreService: FirestoreService) { }
 
-  displayedColumns: string[] = ['name', 'quantity', 'price', 'total'];
+  displayedColumns: string[] = ['name', 'quantity', 'price', 'total','action'];
   dataSource: Product[] = [];
   itemCount: number = 0;
   total: number = 0;
@@ -78,7 +79,7 @@ export class UpdateInvoice {
     }));
     this.itemCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
     this.total = items.reduce((sum, item) => sum + (item.total || 0), 0);
-    if (items.length === 0) this.hideActionBtns = true;
+    //if (items.length === 0) this.hideActionBtns = true;
   }
 
   goToHome(action: string) {
@@ -128,6 +129,33 @@ export class UpdateInvoice {
     }
   }
 
+  onQuantityChange(item: any) {
+    if (!item.quantity || item.quantity < 1) {
+      item.quantity = 1;
+    }
+
+    // Update row total
+    item.total = item.quantity * item.price;
+
+    // Recalculate invoice totals
+    this.itemCount = this.dataSource.reduce(
+      (sum, i) => sum + (i.quantity ?? 1),
+      0
+    );
+
+    this.total = this.dataSource.reduce(
+      (sum, i) => sum + (i.total ?? 0),
+      0
+    );
+
+    // Sync back to invoice service
+    const invoice = this.invoiceService.getEditedInvoice();
+    invoice.items = this.dataSource;
+    invoice.total = this.total;
+    this.invoiceService.setEditedInvoice(invoice);
+  }
+
+
   deleteInvoices() {
     Swal.fire({
       title: "Are you sure?",
@@ -173,7 +201,8 @@ export class UpdateInvoice {
     );
     invoice.items = updated;
     invoice.total = invoice.items.reduce((sum: number, i: any) => sum + i.total, 0);
-    this.invoiceService.setEditedInvoice(invoice)
+    this.invoiceService.setEditedInvoice(invoice);
+    this.cartService.removeItem(item);
     this.mapDataSource(updated);
   }
 
