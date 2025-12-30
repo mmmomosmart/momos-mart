@@ -15,9 +15,9 @@
 
   <!-- FILTERS -->
   <div class="filters">
-    <button mat-raised-button (click)="viewMode.set('WEEK')">This Week</button>
-    <button mat-raised-button (click)="viewMode.set('MONTH')">This Month</button>
-    <button mat-raised-button (click)="viewMode.set('YEAR')">This Year</button>
+    <button mat-raised-button (click)="viewMode.set('WEEK')" [class.active]="viewMode() === 'WEEK'">This Week</button>
+    <button mat-raised-button (click)="viewMode.set('MONTH')" [class.active]="viewMode() === 'MONTH'">This Month</button>
+    <button mat-raised-button (click)="viewMode.set('YEAR')" [class.active]="viewMode() === 'YEAR'">This Year</button>
     <button mat-raised-button (click)="exportInvoicesPDF()">Export PDF</button>
   </div>
 

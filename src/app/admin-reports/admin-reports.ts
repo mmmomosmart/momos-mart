@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -34,7 +34,12 @@ export class AdminReports {
   invoiceService = inject(InvoiceService);
   firestoreService = inject(FirestoreService);
 
-  constructor() { }
+  constructor() {
+    effect(() => {
+      this.viewMode();
+      this.loadOrders();
+    });
+  }
 
   invoice_details = signal<any[]>(
     this.invoiceService.getInvoicesFromLocalStorage('invoices')
@@ -46,22 +51,41 @@ export class AdminReports {
   viewMode = signal<ViewMode>('WEEK');
   selectedBucket = signal<string | null>(null);
 
-  async ngOnInit() {
-    await this.loadOrders();
-  }
-
   async loadOrders() {
     try {
       this.loading.set(true);
-      const data = await this.firestoreService.getCollection<any>('invoices');
-      console.log(data)
+
+      const now = new Date();
+      let start!: Date;
+      let end!: Date;
+
+      if (this.viewMode() === 'WEEK') {
+        start = this.startOfWeek(now);
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+      }
+
+      if (this.viewMode() === 'MONTH') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      }
+
+      if (this.viewMode() === 'YEAR') {
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+      }
+
+      const data = await this.firestoreService.getInvoicesByRange(start, end);
+
       this.invoices.set(data);
+
     } catch (err) {
       Swal.fire({
-        icon: "warning",
-        text: "Invalid quantity.",
-        showConfirmButton: false,
-        timer: 1000
+        icon: 'error',
+        text: 'Failed to load invoices',
+        timer: 1000,
+        showConfirmButton: false
       });
     } finally {
       this.loading.set(false);
@@ -94,33 +118,26 @@ export class AdminReports {
   // ---------- AGGREGATION ----------
   aggregated = computed(() => {
     const map = new Map<string, number>();
-    const now = new Date();
 
-    for (const inv of this.filteredInvoices()) {
+    for (const inv of this.invoices()) {
       const d = this.parseDate(inv);
 
       if (this.viewMode() === 'WEEK') {
-        const s = this.startOfWeek(now);
-        const e = new Date(s); e.setDate(s.getDate() + 6);
-        if (d < s || d > e) continue;
         const k = d.toLocaleDateString('en-US', { weekday: 'short' });
         map.set(k, (map.get(k) || 0) + inv.total);
       }
 
       if (this.viewMode() === 'MONTH') {
-        if (d.getMonth() !== now.getMonth()) continue;
         const k = `Week ${this.weekOfMonth(d)}`;
         map.set(k, (map.get(k) || 0) + inv.total);
       }
 
       if (this.viewMode() === 'YEAR') {
-        if (d.getFullYear() !== now.getFullYear()) continue;
         const k = this.monthName(d.getMonth());
         map.set(k, (map.get(k) || 0) + inv.total);
       }
     }
 
-    console.log(Array.from(map.entries()))
     return Array.from(map.entries());
   });
 
@@ -176,10 +193,10 @@ export class AdminReports {
 
   // ---------- SUMMARY ----------
   totalSales = computed(() =>
-    this.filteredInvoices().reduce((s, inv) => s + inv.total, 0)
+    this.invoices().reduce((s, inv) => s + inv.total, 0)
   );
 
-  totalInvoices = computed(() => this.filteredInvoices().length);
+  totalInvoices = computed(() => this.invoices().length);
 
   avgSale = computed(() =>
     this.totalInvoices()
@@ -223,7 +240,7 @@ export class AdminReports {
     pdf.setFontSize(12);
     pdf.text(`Total Sales: ₹${this.totalSales()}`, 10, y);
 
-    pdf.save('filtered-invoices.pdf');
+    pdf.save(`sales-report-${this.viewMode().toLowerCase()}ly.pdf`);
   }
 
   exportInvoicesExcel() {

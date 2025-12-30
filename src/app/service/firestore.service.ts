@@ -15,7 +15,8 @@ import {
   WithFieldValue,
   query,
   where,
-  orderBy
+  orderBy,
+  Timestamp
 } from 'firebase/firestore';
 import { Expense } from '../expense-list/expense-list';
 
@@ -126,6 +127,25 @@ export class FirestoreService {
     });
   }
 
+  async getInvoicesByRange(
+    start: Date,
+    end: Date
+  ): Promise<any[]> {
+
+    const q = query(
+      collection(this.db, 'invoices'),
+      where('createdAt', '>=', Timestamp.fromDate(start)),
+      where('createdAt', '<=', Timestamp.fromDate(end))
+    );
+
+    const snap = await getDocs(q);
+
+    return snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+  }
+
   startInvoicesByDateListener(date: string) {
     if (this.invoicesByDateUnsub) return;
     console.log("startInvoicesByDateListener");
@@ -148,7 +168,7 @@ export class FirestoreService {
 
   startExpensesListener() {
     if (this.expensesUnsub) return; // already listening
-    
+
     console.log("Expenses db called")
 
     const q = collection(this.db, 'expenses');

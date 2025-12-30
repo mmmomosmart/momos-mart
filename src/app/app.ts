@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import { Capacitor } from '@capacitor/core';
 import { InvoiceService } from './service/invoice-service';
 import { FirestoreService } from './service/firestore.service';
+import { Timestamp } from 'firebase/firestore';
 
 
 @Component({
@@ -100,6 +101,7 @@ export class App {
         date: this.getCurrentDateTime().date,
         time: this.getCurrentDateTime().time
       },
+      createdAt: Timestamp.now(),
       items: this.orderdetails,
       total: this.CartService.getTotal()
     };
