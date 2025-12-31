@@ -62,6 +62,8 @@ export class DetailedOrders {
   pageIndex = signal(0);
   pageSize = signal(5);
 
+  viewMode = signal<string>('');
+
   async ngOnInit() {
     await this.loadOrders();
   }
@@ -96,6 +98,7 @@ export class DetailedOrders {
   });
 
   onSelectedDate(date: Date | null, panel: MatExpansionPanel) {
+    this.viewMode.set('');
     if (!date) return;
 
     this.selectedDate.set(date);
@@ -106,6 +109,7 @@ export class DetailedOrders {
   }
 
   onFromDateChange(date: Date | null, panel: MatExpansionPanel) {
+    this.viewMode.set('');
     this.fromDate.set(date);
 
     // clear single date
@@ -118,6 +122,7 @@ export class DetailedOrders {
   }
 
   onToDateChange(date: Date | null, panel: MatExpansionPanel) {
+    this.viewMode.set('');
     this.toDate.set(date);
 
     // clear single date
@@ -131,6 +136,7 @@ export class DetailedOrders {
   }
 
   resetFilters(panel: MatExpansionPanel) {
+    this.viewMode.set('');
     // reset to today
     this.selectedDate.set(new Date());
 
@@ -205,6 +211,7 @@ export class DetailedOrders {
   }
 
   setYesterday(panel: MatExpansionPanel) {
+    this.viewMode.set('Yesterday');
     const y = new Date();
     y.setDate(y.getDate() - 1);
 
@@ -216,6 +223,7 @@ export class DetailedOrders {
   }
 
   setThisWeek(panel: MatExpansionPanel) {
+    this.viewMode.set('Week');
     const today = this.startOfDay(new Date());
 
     this.selectedDate.set(null); // IMPORTANT
@@ -230,6 +238,7 @@ export class DetailedOrders {
   }
 
   setThisMonth(panel: MatExpansionPanel) {
+    this.viewMode.set('Month');
     const today = this.startOfDay(new Date());
 
     this.selectedDate.set(null);

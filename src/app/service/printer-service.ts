@@ -180,7 +180,7 @@ export class PrinterService {
     lines.push('-'.repeat(WIDTH));
 
     lines.push(`Invoice: ${order.invoiceNumber}`);
-    lines.push(`Date: ${order.createdOn.date}`);
+    lines.push(`Date: ${order.createdOn.date} ${order.createdOn.time}`);
     lines.push('-'.repeat(WIDTH));
 
     // Header

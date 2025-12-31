@@ -98,6 +98,7 @@ export class UpdateInvoice {
   }
 
   async deleteInvoice() {
+    this.invoiceService.deleteInvoiceFromLocalStorage(this.generateBillNo());
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: 'This invoice will be permanently deleted',

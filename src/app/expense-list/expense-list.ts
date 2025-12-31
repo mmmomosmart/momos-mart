@@ -130,7 +130,7 @@ export class ExpenseList {
 
   ngOnInit() {
     this.fs.startExpensesListener();
-  }  
+  }
 
   private normalizeDate(d: Date) {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -155,7 +155,7 @@ export class ExpenseList {
         form: this.filterForm,
         items: this.items,
         clear: () => this.clearFilters(),
-        setToday: () => this.setToday(),
+        setYesterday: () => this.setYesterday(),
         setThisWeek: () => this.setThisWeek(),
         setThisMonth: () => this.setThisMonth()
       }
@@ -307,6 +307,21 @@ export class ExpenseList {
       .filter(e => e.status === 'Due')
       .reduce((sum, e) => sum + e.amount, 0)
   );
+
+  setYesterday() {
+    const today = this.normalizeDate(new Date());
+    today.setDate(today.getDate() - 1);
+
+    this.filterForm.patchValue({
+      purchaseDate: today,
+      fromDate: null,
+      toDate: null
+    });
+
+    this.dateFilter.set(today);
+    this.fromDate.set(null);
+    this.toDate.set(null);
+  }
 
   setToday() {
     const today = this.normalizeDate(new Date());
@@ -512,44 +527,64 @@ export class ExpenseList {
   exportPdfWeb() {
     const doc = new jsPDF();
 
+    const pageWidth = doc.internal.pageSize.getWidth();
+
     doc.setFontSize(16);
     doc.text('Expense Report', 14, 15);
 
+    doc.setFontSize(12);
+    doc.text(
+      `Total: Rs ${this.totalAmount()}`,
+      pageWidth - 14,
+      15,
+      { align: 'right' }
+    );
+
     const rows = this.filteredExpenses().map(e => [
       e.item,
-      `₹ ${e.amount}`,
+      e.amount.toString(),
       new Date(e.purchaseDate).toLocaleDateString(),
       e.status
     ]);
 
     autoTable(doc, {
-      head: [['Item', 'Amount', 'Date', 'Status']],
+      head: [['Item', 'Amount (Rs)', 'Date', 'Status']],
       body: rows,
       startY: 25,
       styles: { fontSize: 10 }
     });
 
-    doc.save(`expenses_${Date.now()}.pdf`);
+    doc.save('expenses_report.pdf');
   }
 
   async exportPdfCapacitor() {
     try {
       const doc = new jsPDF();
 
+      const pageWidth = doc.internal.pageSize.getWidth();
+
       // Title
       doc.setFontSize(16);
       doc.text('Expense Report', 14, 15);
 
+      doc.setFontSize(12);
+      doc.text(
+        `Total: Rs ${this.totalAmount()}`,
+        pageWidth - 14,
+        15,
+        { align: 'right' }
+      );
+
       // Table data
       const rows = this.filteredExpenses().map(e => [
         e.item,
-        `₹ ${e.amount}`,
+        e.amount.toString(),
         new Date(e.purchaseDate).toLocaleDateString(),
         e.status
       ]);
 
       autoTable(doc, {
-        head: [['Item', 'Amount', 'Date', 'Status']],
+        head: [['Item', 'Amount (Rs)', 'Date', 'Status']],
         body: rows,
         startY: 25,
         styles: { fontSize: 10 }
@@ -557,7 +592,7 @@ export class ExpenseList {
 
       // Convert to base64
       const base64 = doc.output('datauristring').split(',')[1];
-      const fileName = `expenses_${Date.now()}.pdf`;
+      const fileName = 'expenses_report.pdf';
 
       // Write file
       await Filesystem.writeFile({

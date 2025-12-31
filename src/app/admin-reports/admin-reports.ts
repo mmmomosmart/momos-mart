@@ -92,6 +92,15 @@ export class AdminReports {
     }
   }
 
+  formatDate(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
+  }
+
+
   // ---------- DATE HELPERS ----------
   parseDate(o: any): Date {
     const [d, m, y] = o.createdOn.date.split('/').map(Number);
@@ -203,59 +212,5 @@ export class AdminReports {
       ? Math.round(this.totalSales() / this.totalInvoices())
       : 0
   );
-
-
-  // ---------- EXPORT ----------
-  exportPDF() {
-    const el = document.getElementById('chartBox')!;
-    html2canvas(el).then(canvas => {
-      const pdf = new jsPDF();
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 190, 100);
-      pdf.save('sales-report.pdf');
-    });
-  }
-
-  exportInvoicesPDF() {
-    const pdf = new jsPDF();
-    let y = 10;
-
-    pdf.setFontSize(14);
-    pdf.text('Sales Report', 10, y);
-    y += 10;
-
-    pdf.setFontSize(10);
-
-    this.filteredInvoices().forEach((inv, i) => {
-      pdf.text(
-        `${i + 1}. ${inv.invoiceNumber} | ${inv.createdOn.date} | ₹${inv.total}`,
-        10,
-        y
-      );
-      y += 7;
-
-      y += 4;
-    });
-
-    y += 5;
-    pdf.setFontSize(12);
-    pdf.text(`Total Sales: ₹${this.totalSales()}`, 10, y);
-
-    pdf.save(`sales-report-${this.viewMode().toLowerCase()}ly.pdf`);
-  }
-
-  exportInvoicesExcel() {
-    const rows = this.filteredInvoices().map(inv => ({
-      Invoice: inv.invoiceNumber,
-      Date: inv.createdOn.date,
-      Items: inv.items.length,
-      Total: inv.total
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Invoices');
-
-    XLSX.writeFile(wb, 'filtered-invoices.xlsx');
-  }
 
 }

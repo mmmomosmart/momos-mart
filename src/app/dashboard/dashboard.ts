@@ -26,8 +26,8 @@ export class Dashboard {
 
   ngOnInit() {
     this.currentDate = this.getCurrentDate();
-    this.totalOrders = this.getOrderStats().totalOrders;
-    this.totalSales = this.getOrderStats().totalSales;
+    // this.totalOrders = this.getOrderStats().totalOrders;
+    // this.totalSales = this.getOrderStats().totalSales;
   }
 
   getCurrentDate() {

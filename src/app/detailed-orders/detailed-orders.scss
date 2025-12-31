@@ -33,12 +33,6 @@
     flex-wrap: wrap;
 }
 
-.filter-actions {
-    display: flex;
-    justify-content: center;
-    margin-top: 5px;
-}
-
 .preset-buttons {
     display: flex;
     gap: 8px;
@@ -50,6 +44,26 @@
     flex: 1;
     border-radius: 18px;
     padding: 11px;
+}
+
+.preset-buttons button {
+  transition: all 0.2s ease;
+}
+
+.preset-buttons button.active {
+  background-color: #ff6b6b !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.preset-buttons button.active:hover {
+  background-color: #ff6b6b !important;
+}
+
+.filter-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 5px;
 }
 
 .empty {
@@ -72,9 +86,38 @@
 .items-table th,
 .items-table td {
     border-bottom: 1px solid #ddd;
-    padding: 6px;
+    padding: 8px 6px;
     font-size: 14px;
 }
+
+/* Item column */
+.items-table th:nth-child(1),
+.items-table td:nth-child(1) {
+    text-align: left;
+}
+
+/* Qty column */
+.items-table th:nth-child(2),
+.items-table td:nth-child(2) {
+    text-align: center;
+    width: 60px;
+}
+
+/* Price column */
+.items-table th:nth-child(3),
+.items-table td:nth-child(3) {
+    text-align: right;
+    width: 90px;
+}
+
+/* Total column */
+.items-table th:nth-child(4),
+.items-table td:nth-child(4) {
+    text-align: right;
+    width: 90px;
+    font-weight: 600;
+}
+
 
 .mat-expansion-panel-header-description {
     flex-grow: 0.25 !important;

@@ -8,7 +8,7 @@ export class InvoiceService {
   private invoiceData: any;
   isInvoiceEdited = new BehaviorSubject<boolean>(false);
 
-  generateBillNo(billType : string) {
+  generateBillNo(billType: string) {
     const currentDate = new Date();
 
     const yyyy = currentDate.getFullYear();
@@ -21,9 +21,20 @@ export class InvoiceService {
 
     const billNumber = `${billType}-${yyyy}${mm}${dd}-${hh}${min}${ss}`
 
-    if(billType== 'INV') this.setInvoiceNumber(billNumber);
+    if (billType == 'INV') this.setInvoiceNumber(billNumber);
 
     return billNumber;
+  }
+
+  getCurrentDateTime() {
+    const today = new Date();
+
+    const date_time = {
+      date: today.getDate() + '/' + (today.getMonth() + 1) + '/' + today.getFullYear(),
+      time: today.toLocaleTimeString()
+    }
+
+    return date_time;
   }
 
   setEditedInvoice(invoiceData: any) {
@@ -83,5 +94,20 @@ export class InvoiceService {
   setExpensesToLocalStorage(expenses: any) {
     localStorage.setItem('expenses', JSON.stringify(expenses));
   }
-  
+
+  deleteInvoiceFromLocalStorage(invoice_number: string) {
+    const currentDate = this.getCurrentDateTime().date;
+    const invoices = this.getInvoicesFromLocalStorage('invoices');
+
+    // Keep today's invoices EXCEPT the one to delete
+    const updatedTodaysInvoices = invoices.filter(
+      (inv: any) =>
+        !(inv.createdOn.date === currentDate &&
+          inv.invoiceNumber === invoice_number)
+    );
+
+    this.setInvoicesToLocalStorage(updatedTodaysInvoices);
+  }
+
+
 }

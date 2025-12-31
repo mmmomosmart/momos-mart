@@ -34,7 +34,7 @@ export class ExpenseFilterDialog {
 
   form: FormGroup = this.data.form;
   items = this.data.items;
-  setToday = this.data.setToday;
+  setYesterday = this.data.setYesterday;
   setThisWeek = this.data.setThisWeek;
   setThisMonth = this.data.setThisMonth;
 
