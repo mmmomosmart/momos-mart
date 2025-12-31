@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, effect, signal } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIcon } from '@angular/material/icon';
 import { Router } from '@angular/router';
@@ -32,68 +32,37 @@ export class OrderDetails {
 
   todaysInvoices: any;
   invoices: any;
-  totalOrders: any;
-  totalSales: any;
   readonly panelOpenState = signal(false);
   displayedColumns: string[] = ['name', 'portion', 'quantity', 'price'];
-  // invoices_details = signal<any[]>([]);
+  
   loading = signal<boolean>(false);
   invoices_details = computed(() => this.firestoreService.invoicesByDate$());
-  //loading = computed(() => this.invoices_details().length === 0);
-  private unsubscribe?: () => void;
 
+  totalOrders = computed(() => this.invoices_details().length);
+
+  totalSales = computed(() =>
+    this.invoices_details().reduce((sum: number, invoice: any) => {
+      const invoiceTotal = invoice.items?.reduce(
+        (t: number, item: any) => t + (item.total ?? 0),
+        0
+      ) ?? 0;
+      return sum + invoiceTotal;
+    }, 0)
+  );
+
+  stopLoadingEffect = effect(() => {
+    const invoices = this.invoices_details();
+    if (invoices) {
+      this.loading.set(false);
+    }
+  });
 
   ngOnInit() {
-    //this.loadInvoices();
-
     this.loading.set(true);
-
-    // this.unsubscribe = this.firestoreService.listenByDate(
-    //   'invoices',
-    //   this.getCurrentDate(),
-    //   (data) => {
-    //     this.invoices_details.set(data);
-    //     this.loading.set(false);
-    //     this.totalOrders = data.length;
-
-    //     this.totalSales = data.reduce((sum: number, invoice: any) => {
-    //       const invoiceTotal = invoice.items.reduce((t: number, item: any) => t + item.total, 0);
-    //       return sum + invoiceTotal;
-    //     }, 0);
-    //   }
-    // );
     this.firestoreService.startInvoicesByDateListener(this.getCurrentDate());
-    if(this.invoices_details()) this.loading.set(false);
-    this.totalOrders = this.invoices_details().length;
-    this.totalSales = this.invoices_details().reduce((sum: number, invoice: any) => {
-      const invoiceTotal = invoice.items.reduce((t: number, item: any) => t + item.total, 0);
-      return sum + invoiceTotal;
-    }, 0);
   }
 
-  // async loadInvoices() {
-  //   this.loading.set(true);
-  //   try {
-  //     const snap = await this.firestoreService.getByDate('invoices', this.getCurrentDate());
-  //     const data = snap.docs.map(d => d.data() as any);
-  //     this.invoices_details.set(data);
-  //     this.totalOrders = data.length;
-
-  //     this.totalSales = data.reduce((sum: number, invoice: any) => {
-  //       const invoiceTotal = invoice.items.reduce((t: number, item: any) => t + item.total, 0);
-  //       return sum + invoiceTotal;
-  //     }, 0);
-  //   } catch (err) {
-  //     console.error('Failed to load invoices', err);
-  //   } finally {
-  //     this.loading.set(false);
-  //   }
-  // }
-
   ngOnDestroy() {
-    // if (this.unsubscribe) {
-    //   this.unsubscribe();
-    // }
     this.firestoreService.stopInvoicesByDateListener();
   }
 
@@ -135,7 +104,6 @@ export class OrderDetails {
       await this.printer.printInvoice(invoiceData);
       await this.printer.disconnect();
 
-      //alert('Invoice printed successfully!');
       Swal.fire({
         icon: "success",
         text: "Invoice saved & printed.",
@@ -143,7 +111,6 @@ export class OrderDetails {
         timer: 1000
       });
     } catch (err: any) {
-      //alert('Print failed: ' + (err?.message || JSON.stringify(err)));
       Swal.fire({
         icon: "error",
         title: "Print Failed",
@@ -151,15 +118,10 @@ export class OrderDetails {
         showConfirmButton: false,
         timer: 1000
       });
-      //Swal.fire('Print failed: ' + (err?.message || JSON.stringify(err)), "", "error");
     }
   }
 
   deleteInvoices(invoiceData: any) {
-
-    // await this.firestoreService.deleteWithId('invoices', invoice.invoiceNumber);
-    // this.firestoreService.clearDateCache('invoices', this.getCurrentDate());
-
     const invoiceNumberToDelete = invoiceData.invoiceNumber;
 
     Swal.fire({
