@@ -90,6 +90,35 @@ export class UpdateInvoice {
     this.router.navigate(['/']);
   }
 
+  onTotalChange(item: any) {
+  // if (item.total == null || item.total < 0) {
+  //   item.total = 0;
+  // }
+
+  //const qty = item.quantity ?? 1;
+
+  // Recalculate price based on total
+  //item.price = qty > 0 ? +(item.total / qty).toFixed(2) : item.price;
+
+  // Recalculate invoice totals
+  this.itemCount = this.dataSource.reduce(
+    (sum, i) => sum + (i.quantity ?? 1),
+    0
+  );
+
+  this.total = this.dataSource.reduce(
+    (sum, i) => sum + (i.total ?? 0),
+    0
+  );
+
+  // Sync back to invoice service
+  const invoice = this.invoiceService.getEditedInvoice();
+  invoice.items = this.dataSource;
+  invoice.total = this.total;
+  this.invoiceService.setEditedInvoice(invoice);
+}
+
+
   editInvoice() {
     this.hideActionBtns = true;
     if (!this.displayedColumns.includes('action')) {

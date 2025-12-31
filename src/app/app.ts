@@ -232,12 +232,17 @@ export class App {
         : invoice
     );
 
+    const hasInvalidItems = editedInvoice.items.length < 1;
     const hasInvalidQuantity = editedInvoice.items.some((item: any) => !item.quantity || item.quantity < 1);
-    if (hasInvalidQuantity) {
-      //Swal.fire('Invalid quantity', 'Quantity must be at least 1', 'warning');
+    const hasInvalidTotal = editedInvoice.items.some((item: any) => !item.total || item.total < 1);
+    if (hasInvalidItems || hasInvalidQuantity || hasInvalidTotal) {
+      let textContent: string = '';
+      if (hasInvalidItems) textContent = 'Invalid Invoice';
+      else if (hasInvalidQuantity) textContent = 'Invalid Item Quantity';
+      else textContent = 'Invalid Item Total';
       Swal.fire({
           icon: "warning",
-          text: "Invalid quantity.",
+          text: textContent,
           showConfirmButton: false,
           timer: 1000
         });
