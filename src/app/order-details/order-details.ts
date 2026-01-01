@@ -33,8 +33,8 @@ export class OrderDetails {
   todaysInvoices: any;
   invoices: any;
   readonly panelOpenState = signal(false);
-  displayedColumns: string[] = ['name', 'portion', 'quantity', 'price'];
-  
+  displayedColumns: string[] = ['name', 'portion', 'quantity', 'price', 'total'];
+
   loading = signal<boolean>(false);
   invoices_details = computed(() => this.firestoreService.invoicesByDate$());
 

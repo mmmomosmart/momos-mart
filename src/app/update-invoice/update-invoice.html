@@ -40,7 +40,7 @@
 
             <td mat-cell *matCellDef="let element">
                 <input class = "quantity" type="number" min="1" [(ngModel)]="element.quantity"
-                    (ngModelChange)="onQuantityChange(element)" style="width: 60px; text-align: center;" />
+                    (ngModelChange)="onQuantityChange(element)" [disabled]="element.displayName === 'Add Ons'" style="width: 60px; text-align: center;" />
             </td>
         </ng-container>
 

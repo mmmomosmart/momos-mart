@@ -95,10 +95,10 @@ export class UpdateInvoice {
   //   item.total = 0;
   // }
 
-  //const qty = item.quantity ?? 1;
+  const qty = item.quantity ?? 1;
 
   // Recalculate price based on total
-  //item.price = qty > 0 ? +(item.total / qty).toFixed(2) : item.price;
+  item.price = qty > 0 && item.name == 'Add Ons' ? +(item.total / qty).toFixed(2) : item.price;
 
   // Recalculate invoice totals
   this.itemCount = this.dataSource.reduce(

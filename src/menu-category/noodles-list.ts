@@ -23,5 +23,7 @@ export const noodlesList: Product[] = [
   { name: "Chicken Noodles", portion: "Half", price: 70},
 
   { name: "Chicken Chilli Garlic Noodles", portion: "Full", price: 140},
-  { name: "Chicken Chilli Garlic Noodles", portion: "Half", price: 80}
+  { name: "Chicken Chilli Garlic Noodles", portion: "Half", price: 80},
+
+  { name: "Special Mix Veg Noodles", portion: "Full", price: 130}
 ];

@@ -20,5 +20,7 @@ export const riceList: Product[] = [
   { name: "Chicken Fried Rice", portion: "Half", price: 80},
 
   { name: "Chicken Chilli Garlic Fried Rice", portion: "Full", price: 160},
-  { name: "Chicken Chilli Garlic Fried Rice", portion: "Half", price: 90}
+  { name: "Chicken Chilli Garlic Fried Rice", portion: "Half", price: 90},
+
+  { name: "Special Mix Veg Rice", portion: "Full", price: 130}
 ];
