@@ -23,7 +23,7 @@ import { MatDividerModule } from '@angular/material/divider';
   styleUrl: './expense-edit-dialog.scss'
 })
 export class ExpenseEditDialog {
-  items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material'];
+  items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material', 'Water Bill', 'Others'];
   private fb = inject(FormBuilder);
   form = this.fb.group({
     item: ['', Validators.required],

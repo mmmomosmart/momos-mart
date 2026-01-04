@@ -40,7 +40,7 @@ export interface Expense {
   styleUrl: './add-expense.scss',
 })
 export class AddExpense {
-  items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material'];
+  items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material', 'Water Bill', 'Others'];
 
   expenses = signal<Expense[]>([]);
 

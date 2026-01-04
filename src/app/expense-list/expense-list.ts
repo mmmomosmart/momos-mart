@@ -108,7 +108,7 @@ export class ExpenseList {
 
   }
 
-  items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material'];
+  items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material', 'Water Bill', 'Others'];
   displayedColumns = this.auth.isAdmin()
     ? ['item', 'amount', 'purchaseDate', 'status', 'actions']
     : ['item', 'amount', 'purchaseDate', 'status'];

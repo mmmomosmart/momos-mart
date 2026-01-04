@@ -224,6 +224,7 @@ export class App {
 
     const invoices = this.invoiceService.getInvoicesFromLocalStorage('invoices');
     const editedInvoice = this.invoiceService.getEditedInvoiceFromLocalStorage('editedInvoice');
+    editedInvoice.createdAt = Timestamp.now();
 
     const updatedInvoices = invoices.map((invoice: any) =>
       invoice.createdOn.date === currentDate &&
