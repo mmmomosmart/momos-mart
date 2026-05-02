@@ -15,6 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { othersList } from '../../menu-category/others-list';
+import { indianList } from '../../menu-category/indian-list';
 
 @Component({
   selector: 'app-menu-items',
@@ -44,7 +45,8 @@ export class MenuItems {
     { label: 'Rolls', value: 'rolls' },
     { label: 'Combos', value: 'combos' },
     { label: 'Paratha', value: 'paratha' },
-    { label: 'Others', value: 'others' }
+    { label: 'Others', value: 'others' },
+    { label: 'Indian', value: 'indian' }
   ];
 
   ngOnInit() {
@@ -82,13 +84,14 @@ export class MenuItems {
       rolls: rollsList,
       combos: combosList,
       paratha: parathaList,
-      others: othersList
+      others: othersList,
+      indian: indianList
     };
 
-    if (category == 'indian') {
-      this.showComingSoonText = true;
-      this.comingSoonText = '...' + 'Coming Soon' + '...';
-    }
+    // if (category == 'indian') {
+    //   this.showComingSoonText = true;
+    //   this.comingSoonText = '...' + 'Coming Soon' + '...';
+    // }
 
     this.products = categoryMap[category];
 

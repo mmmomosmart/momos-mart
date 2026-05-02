@@ -11,14 +11,14 @@ export const rollsList: Product[] = [
   { name: "Lachha Double-Egg Roll", price: 60},
   { name: "Lachha Double-Egg Cheese Roll", price: 80},
 
-  { name: "Lachha Chicken Roll", price: 60},
-  { name: "Lachha Chicken Single-Egg Roll", price: 70},
-  { name: "Lachha Chicken Double-Egg Roll", price: 80},
-  { name: "Lachha Chicken Double-Egg Cheese Roll", price: 100},
+  { name: "Lachha Chicken Roll", price: 70},
+  { name: "Lachha Chicken Single-Egg Roll", price: 80},
+  { name: "Lachha Chicken Double-Egg Roll", price: 90},
+  { name: "Lachha Chicken Double-Egg Cheese Roll", price: 110},
 
-  { name: "Lachha Double Chicken Roll", price: 100},
-  { name: "Lachha Single-Egg Double Chicken  Roll", price: 110},
-  { name: "Lachha Double-Egg Double Chicken  Roll", price: 120},
+  { name: "Lachha Double Chicken Roll", price: 110},
+  { name: "Lachha Single-Egg Double-Chicken  Roll", price: 120},
+  { name: "Lachha Double-Egg Double-Chicken  Roll", price: 130},
 
   { name: "Spring Roll", price: 70}
 ];
