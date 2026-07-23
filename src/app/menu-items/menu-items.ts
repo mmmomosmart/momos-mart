@@ -16,6 +16,7 @@ import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { othersList } from '../../menu-category/others-list';
 import { indianList } from '../../menu-category/indian-list';
+import { briyaniList } from '../../menu-category/briyani-list';
 
 @Component({
   selector: 'app-menu-items',
@@ -46,7 +47,8 @@ export class MenuItems {
     { label: 'Combos', value: 'combos' },
     { label: 'Paratha', value: 'paratha' },
     { label: 'Others', value: 'others' },
-    { label: 'Indian', value: 'indian' }
+    { label: 'Indian', value: 'indian' },
+    { label: 'Briyani', value: 'briyani' }
   ];
 
   ngOnInit() {
@@ -82,10 +84,11 @@ export class MenuItems {
       noodles: noodlesList,
       rice: riceList,
       rolls: rollsList,
+      indian: indianList,
+      briyani: briyaniList,
       combos: combosList,
       paratha: parathaList,
-      others: othersList,
-      indian: indianList
+      others: othersList
     };
 
     // if (category == 'indian') {

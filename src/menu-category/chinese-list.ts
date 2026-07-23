@@ -16,6 +16,10 @@ export const chineseList: Product[] = [
   { name: "Chilli Babycorn", portion: "Full", price: 160},
   { name: "Chilli Mushroom", portion: "Full", price: 160},
 
+  { name: "Soya Chaap Chilli", portion: "Full", price: 180},
+  { name: "Crispy Corn Chilli Potato", portion: "Full", price: 160},
+  { name: "Crispy Corn Salt & Pepper", portion: "Full", price: 120},
+
   { name: "Chilli Potato", portion: "Full", price: 140},
   { name: "Chilli Potato", portion: "Half", price: 70},
 
