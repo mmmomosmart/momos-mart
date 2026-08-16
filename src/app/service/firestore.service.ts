@@ -118,65 +118,50 @@ export class FirestoreService {
     console.log('Monthly sales initialized successfully.');
   }
 
-  async getTotalSales(): Promise<any[]> {
-
+  async getTotalSalesViaMock(): Promise<any[]> {
     const data = await firstValueFrom(
       this.http.get<any[]>('assets/mock.json')
     );
-
     console.log('Mock sales data:', data);
-
     return data;
   }
   
-  async getTotalSaless(): Promise<any[]> {
+  async getTotalSales(): Promise<any[]> {
     return await this.getCollection<any>('TotalSales');
   }
 
-  async getMonthlySaless(year: number, month: number): Promise<number> {
-
+  async getMonthlySalesViaSnapshot(year: number, month: number): Promise<number> {
     const snapshot = await getDocs(collection(this.db, 'TotalSales'));
-
     let monthlyTotal = 0;
-
     const monthName = new Date(year, month - 1).toLocaleString('en-US', {
       month: 'long'
     });
-
     snapshot.forEach(doc => {
       if (doc.id.endsWith(`${monthName} ${year}`)) {
         monthlyTotal += doc.data()['total'] || 0;
       }
     });
-
     return monthlyTotal;
   }
 
   async getMonthlySales(year: number, month: number): Promise<number> {
-
     const sales = await this.getCollection<any>('TotalSales');
-
     const monthName = new Date(year, month - 1).toLocaleString('en-US', {
       month: 'long'
     });
-
     return sales
       .filter(s => s.id.endsWith(`${monthName} ${year}`))
       .reduce((sum, s) => sum + (s.total || 0), 0);
   }
 
   async getSalesByDate(date: Date): Promise<number> {
-
     const docId =
       `${date.getDate()} ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
-
     const docRef = doc(this.db, 'TotalSales', docId);
     const snapshot = await getDoc(docRef);
-
     if (snapshot.exists()) {
       return snapshot.data()['total'] || 0;
     }
-
     return 0;
   }
 
