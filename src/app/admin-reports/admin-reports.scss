@@ -33,16 +33,6 @@
   justify-content: center;
 }
 
-.orders {
-  width: 100%;
-  border-collapse: collapse;
-
-  th, td {
-    padding: 6px;
-    border-bottom: 1px solid #ddd;
-  }
-}
-
 .filters button {
   transition: all 0.2s ease;
 }

@@ -41,8 +41,8 @@ export class AdminDashboard {
 
   adminMenuItems: MenuItem[] = [
     // { label: 'Dashboard', icon: 'home', route: 'dashboard', roles: ['admin', 'cashier'] },
-    { label: 'Reports', icon: 'description', route: 'reports', roles: ['admin'] },
-    { label: 'Sales List', icon: 'shopping_cart', route: 'detailed-orders', roles: ['admin', 'cashier'] },
+    { label: 'Dashboard', icon: 'description', route: 'reports', roles: ['admin'] },
+    { label: 'Invoice List', icon: 'shopping_cart', route: 'detailed-orders', roles: ['admin', 'cashier'] },
     { label: 'Add Expense', icon: 'inventory', route: 'add-expense', roles: ['admin'] },
     { label: 'Expense List', icon: 'request_quote', route: 'expense-list', roles: ['admin'] },
     // { label: 'Estimate List', icon: 'assignment', route: 'estimate', roles: ['admin'] },

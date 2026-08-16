@@ -57,3 +57,13 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Build & Deployment Steps for firebase and genarate apk file
+```bash
+ng build -c production
+firebase deploy
+npx cap copy android
+npx cap sync android
+npx cap open android 
+```
+

@@ -50,6 +50,63 @@ export class OrderDetails {
     }, 0)
   );
 
+  saveTotal() {
+    Swal.fire({
+      title: "Save Total Sales",
+      icon: "question",
+
+      showCancelButton: true,
+      cancelButtonText: "Cancel",
+      cancelButtonColor: "#e53935", // Material red
+
+      showConfirmButton: true,
+      confirmButtonText: "Save",
+      confirmButtonColor: "#43a047", // Material green
+
+      reverseButtons: false
+    }).then((result) => {
+
+      if (result.isConfirmed) {
+        // Save selected
+        const salesDate = new Date().getDate() + " " + new Date().toLocaleString('en-US', { month: 'long' }) + " " + (new Date().getFullYear());
+        console.log(salesDate);
+        const totalSalesValue = {
+          total: this.totalSales(),
+        }
+        this.firestoreService.addWithId('TotalSales', salesDate, totalSalesValue).then(() => {
+          Swal.fire({
+            icon: "success",
+            text: "Saved Total Sales.",
+            showConfirmButton: false,
+            timer: 1000
+          });
+        }).catch(() => {
+          Swal.fire({
+            title: "Try Again!",
+            text: "Something went wrong",
+            icon: "error",
+            timer: 1000,
+            showConfirmButton: false
+          });
+        })
+      }
+
+      else if (result.dismiss === Swal.DismissReason.cancel) {
+        console.log("Cancelled");
+      }
+    });
+
+    //this.firestoreService.initializeMonthlySales(2026,1);
+    // this.firestoreService.getMonthlySales(2026, 7).then((monthlySales) => {
+    //   console.log('Monthly Sales:', monthlySales);
+    // })
+
+    // this.firestoreService.getSalesByDate(new Date(2026, 6, 1)).then((totalSales) => {
+    //   console.log('Total Sales for 2026-07-01:', totalSales);
+    // })
+
+  }
+
   stopLoadingEffect = effect(() => {
     const invoices = this.invoices_details();
     if (invoices) {
@@ -65,7 +122,6 @@ export class OrderDetails {
   ngOnDestroy() {
     this.firestoreService.stopInvoicesByDateListener();
   }
-
 
   getCurrentDate() {
     const today = new Date();

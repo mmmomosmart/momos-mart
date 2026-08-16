@@ -1,34 +1,183 @@
 <div class="spinner-container" *ngIf="loading()">
-    <mat-progress-spinner mode="indeterminate" diameter="50">
-    </mat-progress-spinner>
+  <mat-progress-spinner
+    mode="indeterminate"
+    diameter="50">
+  </mat-progress-spinner>
 </div>
 
 <mat-card *ngIf="!loading()" class="reports">
-  <h2 style="color: mediumvioletred;">Sales Report</h2>
+  <h2 style="color: mediumvioletred; text-align: center;">
+    Sales Report
+  </h2>
 
   <!-- SUMMARY -->
   <div class="summary">
-    <mat-card>Total ₹{{ totalSales() }}</mat-card>
-    <mat-card>Avg ₹{{ avgSale() }}</mat-card>
-    <mat-card>Invoices {{ totalInvoices() }}</mat-card>
+    <mat-card>
+      Total ₹{{ totalSales() }}
+    </mat-card>
+    <mat-card>
+      Avg ₹{{ avgSale() }}
+    </mat-card>
   </div>
 
-  <!-- FILTERS -->
+  <!-- DEFAULT FILTERS -->
   <div class="filters">
-    <button mat-raised-button (click)="viewMode.set('WEEK')" [class.active]="viewMode() === 'WEEK'">This Week</button>
-    <button mat-raised-button (click)="viewMode.set('MONTH')" [class.active]="viewMode() === 'MONTH'">This Month</button>
-    <button mat-raised-button (click)="viewMode.set('YEAR')" [class.active]="viewMode() === 'YEAR'">This Year</button>
-    <!-- <button mat-raised-button (click)="exportInvoicesPDF()">Export PDF</button> -->
+    <button
+      mat-raised-button
+      (click)="selectDefaultFilter('WEEK')"
+      [class.active]="
+        filterType() === 'DEFAULT' &&
+        viewMode() === 'WEEK'
+      ">
+      This Week
+    </button>
+
+    <button
+      mat-raised-button
+      (click)="selectDefaultFilter('MONTH')"
+      [class.active]="
+        filterType() === 'DEFAULT' &&
+        viewMode() === 'MONTH'
+      ">
+      This Month
+    </button>
+
+    <button
+      mat-raised-button
+      (click)="selectDefaultFilter('YEAR')"
+      [class.active]="
+        filterType() === 'DEFAULT' &&
+        viewMode() === 'YEAR'
+      ">
+      This Year
+    </button>
+  </div>
+
+  <!-- CUSTOM FILTERS -->
+  <div class="filters">
+    <button
+      mat-raised-button
+      (click)="selectCustomFilter('DATE')"
+      [class.active]="filterType() === 'DATE'">
+      Select Date
+    </button>
+
+    <button
+      mat-raised-button
+      (click)="selectCustomFilter('RANGE')"
+      [class.active]="filterType() === 'RANGE'">
+      Date Range
+    </button>
+
+    <button
+      mat-raised-button
+      (click)="selectCustomFilter('MONTH_YEAR')"
+      [class.active]="filterType() === 'MONTH_YEAR'">
+      Month & Year
+    </button>
+  </div>
+
+  <!-- PARTICULAR DATE -->
+  <div
+    class="filters"
+    *ngIf="filterType() === 'DATE'">
+    <mat-form-field appearance="outline">
+      <mat-label>Select Date</mat-label>
+
+      <input
+        matInput
+        [matDatepicker]="singlePicker"
+        [ngModel]="selectedDate()"
+        (ngModelChange)="selectedDate.set($event)">
+
+      <mat-datepicker-toggle
+        matIconSuffix
+        [for]="singlePicker">
+      </mat-datepicker-toggle>
+
+      <mat-datepicker
+        #singlePicker>
+      </mat-datepicker>
+    </mat-form-field>
+  </div>
+
+  <!-- DATE RANGE -->
+  <div
+    class="filters"
+    *ngIf="filterType() === 'RANGE'">
+
+    <mat-form-field appearance="outline">
+
+      <mat-label>Select Date Range</mat-label>
+
+      <mat-date-range-input
+        [rangePicker]="rangePicker">
+
+        <input
+          matStartDate
+          placeholder="Start date"
+          [ngModel]="rangeStart()"
+          (ngModelChange)="rangeStart.set($event)">
+
+        <input
+          matEndDate
+          placeholder="End date"
+          [ngModel]="rangeEnd()"
+          (ngModelChange)="rangeEnd.set($event)">
+
+      </mat-date-range-input>
+
+      <mat-datepicker-toggle
+        matIconSuffix
+        [for]="rangePicker">
+      </mat-datepicker-toggle>
+
+      <mat-date-range-picker
+        #rangePicker>
+      </mat-date-range-picker>
+
+    </mat-form-field>
+
+  </div>
+
+  <!-- MONTH & YEAR -->
+  <div class="filters" *ngIf="filterType() === 'MONTH_YEAR'">
+    <mat-form-field appearance="outline">
+      <mat-label>Month</mat-label>
+      <mat-select [ngModel]="selectedMonth()" (ngModelChange)="selectedMonth.set($event)">
+        <mat-option *ngFor="let month of months; let i = index" [value]="i">
+          {{ month }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Year</mat-label>
+      <mat-select [ngModel]="selectedYear()" (ngModelChange)="selectedYear.set($event)">
+        <mat-option *ngFor="let year of years" [value]="year">
+          {{ year }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- CLEAR FILTER -->
+  <div class="filters" *ngIf="filterType() !== 'DEFAULT'">
+    <button mat-raised-button color="warn" type="button" (click)="clearCustomFilter()">
+      Reset
+    </button>
   </div>
 
   <!-- CHART -->
   <div id="chartBox">
+
     <canvas
       baseChart
       [type]="'bar'"
       [data]="chartData()"
       [options]="chartOptions">
     </canvas>
-  </div>
-</mat-card>
 
+  </div>
+
+</mat-card>

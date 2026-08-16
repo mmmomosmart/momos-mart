@@ -1,4 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import {
   getFirestore,
   collection,
@@ -16,7 +18,8 @@ import {
   query,
   where,
   orderBy,
-  Timestamp
+  Timestamp,
+  writeBatch
 } from 'firebase/firestore';
 import { Expense } from '../expense-list/expense-list';
 
@@ -32,6 +35,8 @@ export class FirestoreService {
   private _invoicesByDate = signal<any[]>([]);
   readonly invoicesByDate$ = this._invoicesByDate.asReadonly();
   private invoicesByDateUnsub: (() => void) | null = null;
+
+  private http = inject(HttpClient);
 
 
   //Order Section
@@ -85,6 +90,94 @@ export class FirestoreService {
 
   delete(name: string, id: string) {
     return deleteDoc(doc(this.db, name, id));
+  }
+
+  initializeMonthlySales(year: number, month: number) {
+    // month: 1 = January, 2 = February, ..., 12 = December
+
+    const batch = writeBatch(this.db);
+
+    const current = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0).getDate();
+
+    for (let day = 1; day <= lastDay; day++) {
+      const date = new Date(year, month - 1, day);
+
+      const docId =
+        `${day} ${date.toLocaleString('en-US', { month: 'long' })} ${year}`;
+
+      const docRef = doc(collection(this.db, 'TotalSales'), docId);
+
+      batch.set(docRef, {
+        total: 0
+      });
+    }
+
+    batch.commit();
+
+    console.log('Monthly sales initialized successfully.');
+  }
+
+  async getTotalSales(): Promise<any[]> {
+
+    const data = await firstValueFrom(
+      this.http.get<any[]>('assets/mock.json')
+    );
+
+    console.log('Mock sales data:', data);
+
+    return data;
+  }
+  
+  async getTotalSaless(): Promise<any[]> {
+    return await this.getCollection<any>('TotalSales');
+  }
+
+  async getMonthlySaless(year: number, month: number): Promise<number> {
+
+    const snapshot = await getDocs(collection(this.db, 'TotalSales'));
+
+    let monthlyTotal = 0;
+
+    const monthName = new Date(year, month - 1).toLocaleString('en-US', {
+      month: 'long'
+    });
+
+    snapshot.forEach(doc => {
+      if (doc.id.endsWith(`${monthName} ${year}`)) {
+        monthlyTotal += doc.data()['total'] || 0;
+      }
+    });
+
+    return monthlyTotal;
+  }
+
+  async getMonthlySales(year: number, month: number): Promise<number> {
+
+    const sales = await this.getCollection<any>('TotalSales');
+
+    const monthName = new Date(year, month - 1).toLocaleString('en-US', {
+      month: 'long'
+    });
+
+    return sales
+      .filter(s => s.id.endsWith(`${monthName} ${year}`))
+      .reduce((sum, s) => sum + (s.total || 0), 0);
+  }
+
+  async getSalesByDate(date: Date): Promise<number> {
+
+    const docId =
+      `${date.getDate()} ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
+
+    const docRef = doc(this.db, 'TotalSales', docId);
+    const snapshot = await getDoc(docRef);
+
+    if (snapshot.exists()) {
+      return snapshot.data()['total'] || 0;
+    }
+
+    return 0;
   }
 
   addWithId<T extends DocumentData>(

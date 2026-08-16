@@ -11,7 +11,7 @@
 <div *ngIf="!loading()" class="page-content">
     <div class="summary">
         <mat-card>{{ getCurrentDate() }}</mat-card>
-        <mat-card>Total: ₹ {{totalSales()}}</mat-card>
+        <mat-card (click)="saveTotal()">Total: ₹ {{totalSales()}}</mat-card>
         <mat-card>Invoices: {{totalOrders()}}</mat-card>
     </div>
     <hr />
