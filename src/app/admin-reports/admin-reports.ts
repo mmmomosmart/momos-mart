@@ -552,7 +552,7 @@ export class AdminReports {
         styles: { fontSize: 10 },
       });
 
-      const fileName = `sales-report-${Date.now()}.pdf`;
+      const fileName = `Momos Mart - Sales Report.pdf`;
       if (Capacitor.isNativePlatform()) {
         const base64 = doc.output('datauristring').split(',')[1];
         await Filesystem.writeFile({

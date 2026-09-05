@@ -34,6 +34,6 @@ export const momosList: Product[] = [
   { name: "Soya Momos Fried", portion: "Half", price: 50},
   { name: "Soya Momos Chilli", portion: "Full", price: 110},
   { name: "Soya Momos Chilli", portion: "Half", price: 60},
-  { name: "Soya Momos Crispy", portion: "Full", price: 130},
+  { name: "Soya Momos Crispy", portion: "Full", price: 120},
   { name: "Soya Momos Crispy", portion: "Half", price: 70}
 ];
