@@ -71,12 +71,14 @@ export class DetailedOrders {
   async loadOrders() {
     try {
       this.loading.set(true);
-      const data = await this.firestoreService.getCollection<any>('invoices').then(
-        x => {
-          console.log('Invoices fetched successfully', x);
-          return x;
-        }
-      );
+      const from = this.fromDate();
+      const to = this.toDate();
+      const data = from && to
+        ? await this.firestoreService.getInvoicesByRange(from, this.endOfDay(to))
+        : await this.firestoreService.getInvoicesByDate(
+          this.formatDate(this.selectedDate() ?? new Date())
+        );
+      console.log('Total invoices loaded:', data.length);
       this.orders.set(data);
     } catch (err) {
       Swal.fire({
@@ -98,8 +100,20 @@ export class DetailedOrders {
   paginatedGroupedOrders = computed(() => {
     const start = this.pageIndex() * this.pageSize();
     const end = start + this.pageSize();
+    const pageEntries = this.filteredOrderEntries().slice(start, end);
+    const map = new Map<string, any[]>();
 
-    return this.groupedOrders().slice(start, end);
+    for (const { order, parsedDate } of pageEntries) {
+      const key = parsedDate.toDateString();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(order);
+    }
+
+    return Array.from(map.entries()).map(([date, orders]) => ({
+      date,
+      orders,
+      total: orders.reduce((sum, order) => sum + order.total, 0)
+    }));
   });
 
   onSelectedDate(date: Date | null, panel: MatExpansionPanel) {
@@ -111,6 +125,7 @@ export class DetailedOrders {
     this.toDate.set(null);
 
     panel.close();
+    void this.loadOrders();
   }
 
   onFromDateChange(date: Date | null, panel: MatExpansionPanel) {
@@ -137,6 +152,7 @@ export class DetailedOrders {
     if (this.fromDate() && this.toDate()) {
       this.selectedDate.set(null);
       panel.close();
+      void this.loadOrders();
     }
   }
 
@@ -149,6 +165,7 @@ export class DetailedOrders {
     this.fromDate.set(null);
     this.toDate.set(null);
     panel.close();
+    void this.loadOrders();
   }
 
 
@@ -164,30 +181,41 @@ export class DetailedOrders {
     return x;
   }
 
-  // ===== FILTERED ORDERS =====
-  filteredOrders = computed(() => {
-    const list = this.orders();
+  ordersWithParsedDate = computed(() =>
+    this.orders().map(order => ({
+      order,
+      parsedDate: this.parseOrderDate(order)
+    }))
+  );
 
-    if (this.fromDate() && this.toDate()) {
-      return list.filter(o => {
-        const d = this.parseOrderDate(o);
-        return d >= this.fromDate()! && d <= this.endOfDay(this.toDate()!);
-      });
+  // ===== FILTERED ORDERS =====
+  filteredOrderEntries = computed(() => {
+    const list = this.ordersWithParsedDate();
+    const from = this.fromDate();
+    const to = this.toDate();
+
+    if (from && to) {
+      const end = this.endOfDay(to);
+      return list.filter(({ parsedDate }) => parsedDate >= from && parsedDate <= end);
     } else if (this.selectedDate()) {
-      const sel = this.selectedDate()!;
-      return list.filter(o => this.parseOrderDate(o).toDateString() === sel.toDateString());
+      const selectedDate = this.selectedDate()!;
+      return list.filter(({ parsedDate }) => parsedDate.toDateString() === selectedDate.toDateString());
     }
 
     return list;
   });
 
+  filteredOrders = computed(() =>
+    this.filteredOrderEntries().map(({ order }) => order)
+  );
+
   // ===== GROUP BY DATE =====
   groupedOrders = computed(() => {
     const map = new Map<string, any[]>();
-    for (const o of this.filteredOrders()) {
-      const key = this.parseOrderDate(o).toDateString();
+    for (const { order, parsedDate } of this.filteredOrderEntries()) {
+      const key = parsedDate.toDateString();
       if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(o);
+      map.get(key)!.push(order);
     }
 
     return Array.from(map.entries()).map(([date, orders]) => ({
@@ -284,6 +312,7 @@ export class DetailedOrders {
     this.toDate.set(null);
 
     panel.close();
+    void this.loadOrders();
   }
 
   setThisWeek(panel: MatExpansionPanel) {
@@ -295,6 +324,7 @@ export class DetailedOrders {
     this.toDate.set(today);
 
     panel.close();
+    void this.loadOrders();
   }
 
   private startOfMonth(d: Date) {
@@ -310,6 +340,11 @@ export class DetailedOrders {
     this.toDate.set(today);
 
     panel.close();
+    void this.loadOrders();
+  }
+
+  private formatDate(date: Date) {
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
   }
 
 

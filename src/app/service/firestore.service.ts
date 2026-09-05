@@ -131,7 +131,7 @@ export class FirestoreService {
 
   async getDataViaMock(): Promise<any[]> {
     const data = await firstValueFrom(
-      this.http.get<any[]>('assets/mockReports.json')
+      this.http.get<any[]>('assets/mockInvoices.json')
     );
     //console.log('Mock sales data:', data);
     return data;
@@ -196,6 +196,17 @@ export class FirestoreService {
       orderBy('createdOn.time', 'desc')
     );
     return getDocs(q);
+  }
+
+  async getInvoicesByDate(date: string): Promise<any[]> {
+    const snapshot = await getDocs(
+      query(collection(this.db, 'invoices'), where('createdOn.date', '==', date))
+    );
+
+    return snapshot.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
   }
 
   deleteWithId(collectionName: string, docId: string) {
