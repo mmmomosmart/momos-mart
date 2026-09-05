@@ -96,11 +96,11 @@ export class OrderDetails {
       }
     });
 
+    //this.firestoreService.initializeDailySales(new Date(2026, 7, 19));
     //this.firestoreService.initializeMonthlySales(2026,1);
     // this.firestoreService.getMonthlySales(2026, 7).then((monthlySales) => {
     //   console.log('Monthly Sales:', monthlySales);
     // })
-
     // this.firestoreService.getSalesByDate(new Date(2026, 6, 1)).then((totalSales) => {
     //   console.log('Total Sales for 2026-07-01:', totalSales);
     // })

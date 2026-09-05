@@ -118,11 +118,22 @@ export class FirestoreService {
     console.log('Monthly sales initialized successfully.');
   }
 
-  async getTotalSalesViaMock(): Promise<any[]> {
+  async initializeDailySales(date: Date): Promise<void> {
+    const docId = `${date.getDate()} ${date.toLocaleString('en-US', {
+      month: 'long'
+    })} ${date.getFullYear()}`;
+
+    const docRef = doc(collection(this.db, 'TotalSales'), docId);
+    await setDoc(docRef, { total: 2630 });
+
+    console.log(`Sales initialized for ${docId}.`);
+  }
+
+  async getDataViaMock(): Promise<any[]> {
     const data = await firstValueFrom(
-      this.http.get<any[]>('assets/mock.json')
+      this.http.get<any[]>('assets/mockReports.json')
     );
-    console.log('Mock sales data:', data);
+    //console.log('Mock sales data:', data);
     return data;
   }
   

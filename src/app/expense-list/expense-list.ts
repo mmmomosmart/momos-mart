@@ -108,7 +108,25 @@ export class ExpenseList {
 
   }
 
-  items = ['Noodles', 'Vegetables', 'Paneer', 'Chicken', 'Egg', 'Onion', 'Gas Cylinder', 'Oil', 'Raw Material', 'Water Bill', 'Others'];
+  private readonly defaultItems = [
+    'Noodles',
+    'Vegetables',
+    'Paneer',
+    'Chicken',
+    'Egg',
+    'Onion',
+    'Gas Cylinder',
+    'Oil',
+    'Raw Material',
+    'Water Bill',
+    'Others'
+  ];
+  items = computed(() => [
+    ...new Set([
+      ...this.defaultItems,
+      ...this.expenses().map(expense => expense.item)
+    ])
+  ]);
   displayedColumns = this.auth.isAdmin()
     ? ['item', 'amount', 'purchaseDate', 'status', 'actions']
     : ['item', 'amount', 'purchaseDate', 'status'];
@@ -153,7 +171,7 @@ export class ExpenseList {
       panelClass: 'expense-filter-dialog',
       data: {
         form: this.filterForm,
-        items: this.items,
+        items: this.items(),
         clear: () => this.clearFilters(),
         setYesterday: () => this.setYesterday(),
         setThisWeek: () => this.setThisWeek(),

@@ -17,12 +17,44 @@ import Swal from 'sweetalert2';
 Chart.register(...registerables);
 
 type ViewMode = 'WEEK' | 'MONTH' | 'YEAR';
-
 type FilterType = 'DEFAULT' | 'DATE' | 'RANGE' | 'MONTH_YEAR';
+
+// CONSTANTS
+const MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+const MONTHS_FULL = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+const MONTH_INDEX_MAP = new Map(MONTHS_FULL.map((m, i) => [m, i]));
+const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEKS_OF_MONTH = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
 
 @Component({
   selector: 'app-admin-reports',
-  imports: [ 
+  imports: [
     CommonModule,
     FormsModule,
     MatCardModule,
@@ -33,12 +65,11 @@ type FilterType = 'DEFAULT' | 'DATE' | 'RANGE' | 'MONTH_YEAR';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    BaseChartDirective
+    BaseChartDirective,
   ],
   templateUrl: './admin-reports.html',
-  styleUrls: ['./admin-reports.scss']
+  styleUrls: ['./admin-reports.scss'],
 })
-
 export class AdminReports {
   firestoreService = inject(FirestoreService);
   salesData = signal<any[]>([]);
@@ -53,19 +84,11 @@ export class AdminReports {
   selectedMonth = signal<number>(new Date().getMonth());
   selectedYear = signal<number>(new Date().getFullYear());
 
-  months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  years =
-    Array.from(
-      {
-        length: 11
-      },
-      (_, index) =>
-        new Date().getFullYear() -
-        5 +
-        index
-    );
+  months = MONTHS_SHORT;
+  years = Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i);
 
-  selectedBucket = signal<string | null>(null);
+  // Date parsing cache for performance
+  private readonly parseDateCache = new Map<string, Date>();
 
   constructor() {
     // Firestore is called only once
@@ -78,41 +101,28 @@ export class AdminReports {
       const allSales = await this.firestoreService.getTotalSales();
       this.salesData.set(allSales);
     } catch (error) {
-      console.error('Error loading TotalSales:',error);
       Swal.fire({
         icon: 'error',
         title: 'Try Again!',
         text: 'Failed to load sales report',
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
     } finally {
       this.loading.set(false);
     }
   }
 
-
   // DEFAULT FILTER
-  selectDefaultFilter(
-    mode: ViewMode
-  ) {
+  selectDefaultFilter(mode: ViewMode) {
     this.viewMode.set(mode);
     this.filterType.set('DEFAULT');
-    this.selectedBucket.set(null);
   }
-
 
   // CUSTOM FILTER
-  selectCustomFilter(
-    type:
-      'DATE' |
-      'RANGE' |
-      'MONTH_YEAR'
-  ) {
+  selectCustomFilter(type: 'DATE' | 'RANGE' | 'MONTH_YEAR') {
     this.filterType.set(type);
-    this.selectedBucket.set(null);
   }
-
 
   // CLEAR FILTER
   clearCustomFilter() {
@@ -123,579 +133,323 @@ export class AdminReports {
     this.rangeEnd.set(null);
     this.selectedMonth.set(new Date().getMonth());
     this.selectedYear.set(new Date().getFullYear());
-    this.selectedBucket.set(null);
+    this.parseDateCache.clear(); // Clear cache on filter reset
   }
 
-
-  // PARSE SALES DATE
-  parseSalesDate(
-    docId: string
-  ): Date {
+  // PARSE SALES DATE (cached)
+  parseSalesDate(docId: string): Date {
+    if (this.parseDateCache.has(docId)) {
+      return this.parseDateCache.get(docId)!;
+    }
     const parts = docId.split(' ');
     const day = Number(parts[0]);
     const monthName = parts[1];
     const year = Number(parts[2]);
-    return new Date(
-      year,
-      this.monthIndex(monthName),
-      day
-    );
+    const date = new Date(year, MONTH_INDEX_MAP.get(monthName) ?? 0, day);
+    this.parseDateCache.set(docId, date);
+    return date;
   }
 
-
-  // MONTH INDEX
-  monthIndex(
-    monthName: string
-  ): number {
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    return months.indexOf(monthName);
+  // MONTH INDEX (optimized with Map lookup)
+  monthIndex(monthName: string): number {
+    return MONTH_INDEX_MAP.get(monthName) ?? 0;
   }
-
 
   // START OF DAY
-  startOfDay(
-    date: Date
-  ): Date {
+  startOfDay(date: Date): Date {
     const d = new Date(date);
-    d.setHours(0,0,0,0);
+    d.setHours(0, 0, 0, 0);
     return d;
   }
-
 
   // END OF DAY
-  endOfDay(
-    date: Date
-  ): Date {
+  endOfDay(date: Date): Date {
     const d = new Date(date);
-    d.setHours(23,59,59,999);
+    d.setHours(23, 59, 59, 999);
     return d;
   }
 
-
   // START OF WEEK:MONDAY
-  startOfWeek(
-    date: Date
-  ): Date {
+  startOfWeek(date: Date): Date {
     const d = new Date(date);
     const day = d.getDay() || 7;
     d.setDate(d.getDate() - day + 1);
-    d.setHours(0,0,0,0);
+    d.setHours(0, 0, 0, 0);
     return d;
   }
 
-
   // WEEK OF MONTH
-  weekOfMonth(
-    date: Date
-  ): number {
+  weekOfMonth(date: Date): number {
     return Math.ceil(date.getDate() / 7);
   }
 
-  filteredSales =
-    computed(() => {
-      const sales =
-        this.salesData();
+  // GET DATE RANGE helper
+  private getDateRange(viewMode: ViewMode): [Date, Date] {
+    const now = new Date();
+    let start: Date, end: Date;
 
-      if (this.filterType() === 'DATE') {
-        const selected = this.selectedDate();
-        if (!selected) {
-          return [];
-        }
-        const start = this.startOfDay(selected);
-        const end = this.endOfDay(selected);
-        return sales.filter(
-          sale => {
-            const date = this.parseSalesDate(sale.id);
-            return (
-              date >= start &&
-              date <= end
-            );
-          }
-        );
-      }
+    if (viewMode === 'WEEK') {
+      start = this.startOfWeek(now);
+      end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      end = this.endOfDay(end);
+    } else if (viewMode === 'MONTH') {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      end = this.endOfDay(end);
+    } else {
+      start = new Date(now.getFullYear(), 0, 1);
+      end = new Date(now.getFullYear(), 11, 31);
+      end = this.endOfDay(end);
+    }
+    return [start, end];
+  }
 
-      if (this.filterType() === 'RANGE') {
-        const from =this.rangeStart();
-        const to = this.rangeEnd();
-        if (!from || !to) {
-          return [];
-        }
-        const start = this.startOfDay(from);
-        const end = this.endOfDay(to);
-        return sales.filter(
-          sale => {
-            const date = this.parseSalesDate(sale.id);
-            return (
-              date >= start &&
-              date <= end
-            );
-          }
-        );
-      }
+  // SAFE SALE TOTAL helper
+  private getSaleTotal(sale: any): number {
+    return Number(sale.total) || 0;
+  }
 
-      if (this.filterType() === 'MONTH_YEAR') {
-        const month = this.selectedMonth();
-        const year = this.selectedYear();
-        return sales.filter(
-          sale => {
-            const date = this.parseSalesDate(sale.id);
-            return (
-              date.getMonth() === month && date.getFullYear() === year
-            );
-          }
-        );
-      }
+  filteredSales = computed(() => {
+    const sales = this.salesData();
+    const filterType = this.filterType();
 
-      // DEFAULT FILTERS
-      const now = new Date();
-      let start: Date;
-      let end: Date;
+    if (filterType === 'DATE') {
+      const selected = this.selectedDate();
+      if (!selected) return [];
+      const start = this.startOfDay(selected);
+      const end = this.endOfDay(selected);
+      return sales.filter((sale) => {
+        const date = this.parseSalesDate(sale.id);
+        return date >= start && date <= end;
+      });
+    }
 
-      // WEEK
-      if (this.viewMode() === 'WEEK') {
-        start = this.startOfWeek(now);
-        end = new Date(start);
-        end.setDate(end.getDate() + 6);
-        end = this.endOfDay(end);
-      }
+    if (filterType === 'RANGE') {
+      const from = this.rangeStart();
+      const to = this.rangeEnd();
+      if (!from || !to) return [];
+      const start = this.startOfDay(from);
+      const end = this.endOfDay(to);
+      return sales.filter((sale) => {
+        const date = this.parseSalesDate(sale.id);
+        return date >= start && date <= end;
+      });
+    }
 
-      // MONTH
-      else if (this.viewMode() === 'MONTH') {
-        start =
-          new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            1
-          );
-        end =
-          new Date(
-            now.getFullYear(),
-            now.getMonth() + 1,
-            0
-          );
-        end =
-          this.endOfDay(
-            end
-          );
-      }
+    if (filterType === 'MONTH_YEAR') {
+      const month = this.selectedMonth();
+      const year = this.selectedYear();
+      return sales.filter((sale) => {
+        const date = this.parseSalesDate(sale.id);
+        return date.getMonth() === month && date.getFullYear() === year;
+      });
+    }
 
-      // YEAR
-      else {
-        start =
-          new Date(
-            now.getFullYear(),
-            0,
-            1
-          );
-        end =
-          new Date(
-            now.getFullYear(),
-            11,
-            31
-          );
-        end =
-          this.endOfDay(
-            end
-          );
-      }
-
-      return sales.filter(
-        sale => {
-          const date = this.parseSalesDate(sale.id);
-          return (
-            date >= start &&
-            date <= end
-          );
-        }
-      );
+    // DEFAULT FILTERS
+    const [start, end] = this.getDateRange(this.viewMode());
+    return sales.filter((sale) => {
+      const date = this.parseSalesDate(sale.id);
+      return date >= start && date <= end;
     });
-
+  });
 
   // TOTAL SALES
-  totalSales =
-    computed(() => {
-      return this.filteredSales()
-        .reduce(
-          (
-            sum,
-            sale
-          ) => {
-            return (
-              sum +
-              (
-                Number(
-                  sale.total
-                ) || 0
-              )
-            );
-          },
-          0
-        );
-    });
+  totalSales = computed(() => {
+    return this.filteredSales().reduce((sum, sale) => sum + this.getSaleTotal(sale), 0);
+  });
 
   // NUMBER OF DAYS
-  numberOfDays =
-    computed(() => {
-      // PARTICULAR DATE
-      if (this.filterType() === 'DATE') {
-        return this.selectedDate()
-          ? 1
-          : 0;
+  numberOfDays = computed(() => {
+    // PARTICULAR DATE
+    if (this.filterType() === 'DATE') {
+      return this.selectedDate() ? 1 : 0;
+    }
+
+    // DATE RANGE
+    if (this.filterType() === 'RANGE') {
+      const from = this.rangeStart();
+      const to = this.rangeEnd();
+      if (!from || !to) {
+        return 0;
+      }
+      const start = this.startOfDay(from);
+      const end = this.startOfDay(to);
+      return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    // MONTH & YEAR
+    if (this.filterType() === 'MONTH_YEAR') {
+      return new Date(this.selectedYear(), this.selectedMonth() + 1, 0).getDate();
+    }
+
+    // WEEK
+    if (this.viewMode() === 'WEEK') {
+      return 7;
+    }
+
+    // MONTH
+    if (this.viewMode() === 'MONTH') {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    }
+
+    // YEAR
+    const year = new Date().getFullYear();
+    return new Date(year, 1, 29).getMonth() === 1 ? 366 : 365;
+  });
+
+  // AVERAGE SALE
+  avgSale = computed(() => {
+    const days = this.numberOfDays();
+    if (!days) {
+      return 0;
+    }
+    return Math.round(this.totalSales() / days);
+  });
+
+  // CHART AGGREGATION
+  aggregated = computed(() => {
+    const sales = this.filteredSales();
+    const map = new Map<string, number>();
+
+    // PARTICULAR DATE
+    if (this.filterType() === 'DATE') {
+      const total = sales.reduce((sum, sale) => sum + this.getSaleTotal(sale), 0);
+
+      const selected = this.selectedDate();
+      const label = selected ? selected.toLocaleDateString('en-GB') : 'Select Date';
+      return [[label, total]] as [string, number][];
+    }
+
+    // DATE RANGE
+    if (this.filterType() === 'RANGE') {
+      const from = this.rangeStart();
+      const to = this.rangeEnd();
+      if (!from || !to) {
+        return [];
       }
 
-      // DATE RANGE
-      if (this.filterType() === 'RANGE') {
-        const from = this.rangeStart();
-        const to = this.rangeEnd();
-        if (!from || !to) {
-          return 0;
-        }
-        const start = this.startOfDay(from);
-        const end = this.startOfDay(to);
-        return Math.floor(
-          (
-            end.getTime() -
-            start.getTime()
-          )
-          /
-          (
-            1000 *
-            60 *
-            60 *
-            24
-          )
-        ) + 1;
+      /*
+       * Create every date in the range.
+       * This means dates with zero sales
+       * are also shown.
+       */
+      const result: [string, number][] = [];
+      const current = this.startOfDay(from);
+      const end = this.startOfDay(to);
+      const salesMap = new Map<string, number>();
+
+      // First aggregate actual sales
+      for (const sale of sales) {
+        const date = this.parseSalesDate(sale.id);
+        const key = this.dateKey(date);
+        const total = this.getSaleTotal(sale);
+        salesMap.set(key, (salesMap.get(key) || 0) + total);
       }
 
-      // MONTH & YEAR
-      if (this.filterType() === 'MONTH_YEAR') {
-        return new Date(
-          this.selectedYear(),
-          this.selectedMonth() + 1,
-          0
-        ).getDate();
+      // Then create chronological dates
+      while (current <= end) {
+        const key = this.dateKey(current);
+        result.push([this.formatDate(current), salesMap.get(key) || 0]);
+        current.setDate(current.getDate() + 1);
       }
+      return result;
+    }
+
+    // MONTH & YEAR
+    if (this.filterType() === 'MONTH_YEAR') {
+      for (const sale of sales) {
+        const date = this.parseSalesDate(sale.id);
+        const key = `Week ${this.weekOfMonth(date)}`;
+        const total = this.getSaleTotal(sale);
+        map.set(key, (map.get(key) || 0) + total);
+      }
+      return WEEKS_OF_MONTH.map((week) => [week, map.get(week) || 0] as [string, number]);
+    }
+
+    //  DEFAULT WEEK / MONTH / YEAR
+    for (const sale of sales) {
+      const date = this.parseSalesDate(sale.id);
+      const total = this.getSaleTotal(sale);
 
       // WEEK
       if (this.viewMode() === 'WEEK') {
-        return 7;
+        const key = date.toLocaleDateString('en-US', {
+          weekday: 'short',
+        });
+        map.set(key, (map.get(key) || 0) + total);
       }
 
       // MONTH
       if (this.viewMode() === 'MONTH') {
-        const now = new Date();
-        return new Date(
-          now.getFullYear(),
-          now.getMonth() + 1,
-          0
-        ).getDate();
+        const key = `Week ${this.weekOfMonth(date)}`;
+        map.set(key, (map.get(key) || 0) + total);
       }
 
       // YEAR
-      const year = new Date().getFullYear();
-      return (
-        new Date(
-          year,
-          1,
-          29
-        ).getMonth() === 1
-      )
-        ? 366
-        : 365;
-    });
-
-  // AVERAGE SALE
-  avgSale =
-    computed(() => {
-      const days = this.numberOfDays();
-      if (!days) {
-        return 0;
-      }
-      return Math.round(
-        this.totalSales() /
-        days
-      );
-    });
-
-  // CHART AGGREGATION
-  aggregated =
-    computed(() => {
-      const sales = this.filteredSales();
-      const map =
-        new Map<
-          string,
-          number
-        >();
-
-      // PARTICULAR DATE
-      if (this.filterType() === 'DATE') {
-        const total =
-          sales.reduce(
-            (
-              sum,
-              sale
-            ) =>
-              sum +
-              (
-                Number(
-                  sale.total
-                ) || 0
-              ),
-            0
-          );
-
-        const selected = this.selectedDate();
-        const label =
-          selected
-            ? selected.toLocaleDateString(
-              'en-GB'
-            )
-            : 'Select Date';
-        return [
-          [
-            label,
-            total
-          ]
-        ] as [string, number][];
-      }
-
-      // DATE RANGE
-      if (this.filterType() === 'RANGE') {
-        const from = this.rangeStart();
-        const to = this.rangeEnd();
-        if ( !from || !to ) {
-          return [];
-        }
-
-        /*
-         * Create every date in the range.
-         * This means dates with zero sales
-         * are also shown.
-         */
-        const result: [string, number][] = [];
-        const current = this.startOfDay(from);
-        const end = this.startOfDay(to);
-        const salesMap =
-          new Map<
-            string,
-            number
-          >();
-
-        // First aggregate actual sales
-        for (const sale of sales) {
-          const date = this.parseSalesDate(sale.id);
-          const key = this.dateKey(date);
-          const total = Number(sale.total) || 0;
-          salesMap.set(
-            key,
-            (
-              salesMap.get(key) ||
-              0
-            ) + total
-          );
-        }
-
-        // Then create chronological dates
-        while (current <= end) {
-          const key = this.dateKey(current);
-          result.push([
-            this.formatDate(
-              current
-            ),
-            salesMap.get(key) || 0
-          ]);
-          current.setDate(
-            current.getDate() + 1
-          );
-        }
-        return result;
-      }
-
-      // MONTH & YEAR
-      if (this.filterType() === 'MONTH_YEAR') {
-        for (const sale of sales){
-          const date = this.parseSalesDate(sale.id);
-          const key = `Week ${this.weekOfMonth(date)}`;
-          const total = Number(sale.total) || 0;
-          map.set(
-            key,
-            (
-              map.get(key) ||
-              0
-            ) + total
-          );
-        }
-        const weeks = [
-          'Week 1',
-          'Week 2',
-          'Week 3',
-          'Week 4',
-          'Week 5'
-        ];
-        return weeks.map(
-          week => [
-            week,
-            map.get(week) || 0
-          ] as [string, number]
-        );
-      }
-
-      //  DEFAULT WEEK / MONTH / YEAR
-      for (const sale of sales) {
-        const date = this.parseSalesDate(sale.id);
-        const total = Number(sale.total) || 0;
-
-        // WEEK
-        if (this.viewMode() === 'WEEK') {
-          const key =
-            date.toLocaleDateString(
-              'en-US',
-              {
-                weekday: 'short'
-              }
-            );
-          map.set(
-            key,
-            (
-              map.get(key) ||
-              0
-            ) + total
-          );
-        }
-
-        // MONTH
-        if (this.viewMode() === 'MONTH') {
-          const key = `Week ${this.weekOfMonth(date)}`;
-          map.set(
-            key,
-            (
-              map.get(key) ||
-              0
-            ) + total
-          );
-        }
-
-        // YEAR
-        if (this.viewMode() === 'YEAR') {
-          const key = this.monthName(date.getMonth());
-          map.set(
-            key,
-            (
-              map.get(key) ||
-              0
-            ) + total
-          );
-        }
-      }
-
-      // YEAR → JAN TO DEC
       if (this.viewMode() === 'YEAR') {
-        return this.months.map(
-          month => [
-            month,
-            map.get(month) || 0
-          ] as [string, number]
-        );
+        const key = this.monthName(date.getMonth());
+        map.set(key, (map.get(key) || 0) + total);
       }
+    }
 
-      //  WEEK → MON TO SUN
-      if (this.viewMode() === 'WEEK') {
-        const days = [
-          'Mon',
-          'Tue',
-          'Wed',
-          'Thu',
-          'Fri',
-          'Sat',
-          'Sun'
-        ];
-        return days.map(
-          day => [
-            day,
-            map.get(day) || 0
-          ] as [string, number]
-        );
-      }
+    // YEAR → JAN TO DEC
+    if (this.viewMode() === 'YEAR') {
+      return MONTHS_SHORT.map((month) => [month, map.get(month) || 0] as [string, number]);
+    }
 
-      // MONTH → WEEK 1 TO WEEK 5
-      const weeks = [
-        'Week 1',
-        'Week 2',
-        'Week 3',
-        'Week 4',
-        'Week 5'
-      ];
-      return weeks.map(
-        week => [
-          week,
-          map.get(week) || 0
-        ] as [string, number]
-      );
-    });
+    // WEEK → MON TO SUN
+    if (this.viewMode() === 'WEEK') {
+      return DAYS_OF_WEEK.map((day) => [day, map.get(day) || 0] as [string, number]);
+    }
+
+    // MONTH → WEEK 1 TO WEEK 5
+    return WEEKS_OF_MONTH.map((week) => [week, map.get(week) || 0] as [string, number]);
+  });
 
   // MONTH NAME
   monthName(index: number): string {
-    return this.months[index];
+    return MONTHS_SHORT[index];
   }
 
   // DATE KEY
   dateKey(date: Date): string {
-    return [
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-    ].join('-');
+    return [date.getFullYear(), date.getMonth(), date.getDate()].join('-');
   }
 
   // FORMAT DATE
   formatDate(date: Date): string {
-    return date.toLocaleDateString(
-      'en-GB'
-    );
+    return date.toLocaleDateString('en-GB');
   }
 
   // CHART DATA
-  chartData =
-    computed(() => ({
-      labels:
-        this.aggregated()
-          .map(
-            item => item[0]
-          ),
+  chartData = computed(() => {
+    const aggregated = this.aggregated();
+    return {
+      labels: aggregated.map((item) => item[0]),
       datasets: [
         {
           label: 'Sales ₹',
-          data:
-            this.aggregated()
-              .map(
-                item => item[1]
-              ),
-          backgroundColor:
-            '#ff6b6b',
-          borderColor:
-            '#FFFFFF',
+          data: aggregated.map((item) => item[1]),
+          backgroundColor: '#ff6b6b',
+          borderColor: '#FFFFFF',
           borderWidth: 1,
-          borderRadius: 6
-        }
-      ]
-    }));
+          borderRadius: 6,
+        },
+      ],
+    };
+  });
 
   // CHART OPTIONS
   chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    onClick: (
-      _: any,
-      elements: any[]
-    ) => {
-      if (!elements.length) {
-        return;
-      }
+    onClick: (_: any, elements: any[]) => {
+      if (!elements.length) return;
+      // Handle chart click - can be used for drilling down or highlighting
       const index = elements[0].index;
-      this.selectedBucket.set(
-        this.chartData()
-          .labels[index]
-      );
-    }
+      const selectedLabel = this.chartData().labels[index];
+    },
   };
 }

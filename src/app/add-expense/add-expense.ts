@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -48,17 +48,31 @@ export class AddExpense {
 
   constructor(private fb: FormBuilder, private invoiceService: InvoiceService, private fs: FirestoreService) {
     this.expenseForm = this.fb.group({
-      item: ['', Validators.required],
+      item: [''],
+      customItem: [''],
       amount: [null, [Validators.required, Validators.min(1)]],
       purchaseDate: [new Date(), Validators.required],
       status: ['Paid', Validators.required]
+    }, {
+      validators: (control: AbstractControl): ValidationErrors | null => {
+        const item = control.get('item')?.value;
+        const customItem = control.get('customItem')?.value;
+        return item || customItem?.trim() ? null : { itemRequired: true };
+      }
     });
   }
 
   addExpense() {
     if (this.expenseForm.invalid) return;
-    const expense = this.expenseForm.value as Expense;
-    expense.id = this.invoiceService.generateBillNo('EXP');
+    const formValue = this.expenseForm.getRawValue();
+    const item = formValue.customItem?.trim() || formValue.item;
+    const expense: Expense = {
+      id: this.invoiceService.generateBillNo('EXP'),
+      item,
+      amount: Number(formValue.amount),
+      purchaseDate: formValue.purchaseDate,
+      status: formValue.status
+    };
     this.expenses.update(list => [...list, expense]);
 
     const html = `
@@ -95,6 +109,7 @@ export class AddExpense {
   resetForm() {
     this.expenseForm.reset({
       item: '',
+      customItem: '',
       amount: null,
       purchaseDate: new Date(),
       status: 'Paid'
