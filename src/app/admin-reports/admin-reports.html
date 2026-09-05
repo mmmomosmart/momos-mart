@@ -180,4 +180,15 @@
 
   </div>
 
+  <div class="report-actions">
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      [disabled]="loading() || !aggregated().length"
+      (click)="exportPdf()">
+      Download PDF
+    </button>
+  </div>
+
 </mat-card>

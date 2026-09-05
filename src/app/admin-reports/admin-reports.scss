@@ -46,3 +46,9 @@
 .filters button.active:hover {
   background-color: #ff6b6b !important;
 }
+
+.report-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}

@@ -13,6 +13,11 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Chart, registerables } from 'chart.js';
 import { FirestoreService } from '../service/firestore.service';
 import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Capacitor } from '@capacitor/core';
+import { Directory, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 Chart.register(...registerables);
 
@@ -512,4 +517,116 @@ export class AdminReports {
     responsive: true,
     maintainAspectRatio: false,
   };
+
+  getFilterLabel(): string {
+    const range = this.getActiveDateRange();
+    if (!range) return 'No date selected';
+
+    const [start, end] = range;
+    return start.toDateString() === end.toDateString()
+      ? this.formatDate(start)
+      : `${this.formatDate(start)} - ${this.formatDate(end)}`;
+  }
+
+  async exportPdf() {
+    try {
+      const doc = new jsPDF();
+      const rows = this.getPdfRows();
+      const logo = await this.loadLogo();
+      const contentX = logo ? 44 : 14;
+
+      if (logo) {
+        doc.addImage(logo, 'PNG', 14, 8, 24, 24);
+      }
+
+      doc.setFontSize(16);
+      doc.text('Momos Mart - Sales Report', contentX, 15);
+      doc.setFontSize(11);
+      doc.text(`Period: ${this.getFilterLabel()}`, contentX, 24);
+      doc.text(`Total Sales: Rs ${this.totalSales()}`, contentX, 32);
+
+      autoTable(doc, {
+        head: [['Period', 'Sales']],
+        body: rows,
+        startY: 40,
+        styles: { fontSize: 10 },
+      });
+
+      const fileName = `sales-report-${Date.now()}.pdf`;
+      if (Capacitor.isNativePlatform()) {
+        const base64 = doc.output('datauristring').split(',')[1];
+        await Filesystem.writeFile({
+          path: fileName,
+          data: base64,
+          directory: Directory.Documents,
+        });
+
+        const fileUri = await Filesystem.getUri({
+          directory: Directory.Documents,
+          path: fileName,
+        });
+
+        await Share.share({
+          title: 'Momos Mart Sales Report',
+          files: [fileUri.uri],
+        });
+      } else {
+        doc.save(fileName);
+      }
+    } catch (error: any) {
+      if (error?.message?.toLowerCase().includes('cancel')) return;
+
+      Swal.fire({
+        title: 'Export Failed',
+        text: error?.message || 'Unable to export sales report',
+        icon: 'error',
+        timer: 1200,
+        showConfirmButton: false,
+      });
+    }
+  }
+
+  private async loadLogo(): Promise<string | null> {
+    try {
+      const response = await fetch('assets/icons/icon_512x512.png');
+      const blob = await response.blob();
+
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  private getPdfRows(): string[][] {
+    const totalsByDate = new Map(
+      this.filteredSales().map(sale => [
+        this.dateKey(this.parseSalesDate(sale.id)),
+        this.getSaleTotal(sale)
+      ])
+    );
+    const range = this.getActiveDateRange();
+
+    if (!range) return [];
+
+    const rows: string[][] = [];
+    const current = this.startOfDay(range[0]);
+    const end = this.startOfDay(range[1]);
+
+    while (current <= end) {
+      const key = this.dateKey(current);
+      const total = totalsByDate.get(key) || 0;
+      rows.push([
+        `${current.toLocaleDateString('en-US', { weekday: 'short' })} - ${this.formatDate(current)}`,
+        `Rs ${total}`
+      ]);
+      current.setDate(current.getDate() + 1);
+    }
+
+    return rows;
+  }
 }
