@@ -141,6 +141,33 @@ export class FirestoreService {
     return await this.getCollection<any>('TotalSales');
   }
 
+  async getTotalSalesByRange(start: Date, end: Date): Promise<any[]> {
+    const dates: Date[] = [];
+    const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+    while (current <= last) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+
+    const snapshots = await Promise.all(
+      dates.map(date => {
+        const docId = `${date.getDate()} ${date.toLocaleString('en-US', {
+          month: 'long'
+        })} ${date.getFullYear()}`;
+        return getDoc(doc(this.db, 'TotalSales', docId));
+      })
+    );
+
+    return snapshots
+      .filter(snapshot => snapshot.exists())
+      .map(snapshot => ({
+        id: snapshot.id,
+        ...snapshot.data()
+      }));
+  }
+
   async getMonthlySalesViaSnapshot(year: number, month: number): Promise<number> {
     const snapshot = await getDocs(collection(this.db, 'TotalSales'));
     let monthlyTotal = 0;

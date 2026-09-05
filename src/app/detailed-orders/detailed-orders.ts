@@ -209,22 +209,6 @@ export class DetailedOrders {
     this.filteredOrderEntries().map(({ order }) => order)
   );
 
-  // ===== GROUP BY DATE =====
-  groupedOrders = computed(() => {
-    const map = new Map<string, any[]>();
-    for (const { order, parsedDate } of this.filteredOrderEntries()) {
-      const key = parsedDate.toDateString();
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(order);
-    }
-
-    return Array.from(map.entries()).map(([date, orders]) => ({
-      date,
-      orders,
-      total: orders.reduce((s, o) => s + o.total, 0)
-    }));
-  });
-
   grandTotal = computed(() =>
     this.filteredOrders().reduce((s, o) => s + o.total, 0)
   );

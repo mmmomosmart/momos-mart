@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,6 +18,11 @@ Chart.register(...registerables);
 
 type ViewMode = 'WEEK' | 'MONTH' | 'YEAR';
 type FilterType = 'DEFAULT' | 'DATE' | 'RANGE' | 'MONTH_YEAR';
+
+interface SalesRecord {
+  id: string;
+  total: number;
+}
 
 // CONSTANTS
 const MONTHS_SHORT = [
@@ -54,6 +59,7 @@ const WEEKS_OF_MONTH = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
 
 @Component({
   selector: 'app-admin-reports',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     FormsModule,
@@ -72,8 +78,10 @@ const WEEKS_OF_MONTH = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
 })
 export class AdminReports {
   firestoreService = inject(FirestoreService);
-  salesData = signal<any[]>([]);
+  salesData = signal<SalesRecord[]>([]);
   loading = signal<boolean>(false);
+  private readonly reportDate = new Date();
+  private loadRequestId = 0;
 
   viewMode = signal<ViewMode>('WEEK');
   filterType = signal<FilterType>('DEFAULT');
@@ -81,11 +89,11 @@ export class AdminReports {
   rangeStart = signal<Date | null>(null);
   rangeEnd = signal<Date | null>(null);
 
-  selectedMonth = signal<number>(new Date().getMonth());
-  selectedYear = signal<number>(new Date().getFullYear());
+  selectedMonth = signal<number>(this.reportDate.getMonth());
+  selectedYear = signal<number>(this.reportDate.getFullYear());
 
   months = MONTHS_SHORT;
-  years = Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i);
+  years = Array.from({ length: 11 }, (_, i) => this.reportDate.getFullYear() - 5 + i);
 
   // Date parsing cache for performance
   private readonly parseDateCache = new Map<string, Date>();
@@ -96,11 +104,21 @@ export class AdminReports {
   }
 
   async loadSales() {
+    const requestId = ++this.loadRequestId;
+
     try {
       this.loading.set(true);
-      const allSales = await this.firestoreService.getTotalSales();
-      this.salesData.set(allSales);
+      const range = this.getActiveDateRange();
+      if (!range) {
+        this.salesData.set([]);
+        return;
+      }
+
+      const sales = await this.firestoreService.getTotalSalesByRange(range[0], range[1]);
+      if (requestId !== this.loadRequestId) return;
+      this.salesData.set(sales);
     } catch (error) {
+      if (requestId !== this.loadRequestId) return;
       Swal.fire({
         icon: 'error',
         title: 'Try Again!',
@@ -109,7 +127,9 @@ export class AdminReports {
         showConfirmButton: false,
       });
     } finally {
-      this.loading.set(false);
+      if (requestId === this.loadRequestId) {
+        this.loading.set(false);
+      }
     }
   }
 
@@ -117,11 +137,13 @@ export class AdminReports {
   selectDefaultFilter(mode: ViewMode) {
     this.viewMode.set(mode);
     this.filterType.set('DEFAULT');
+    void this.loadSales();
   }
 
   // CUSTOM FILTER
   selectCustomFilter(type: 'DATE' | 'RANGE' | 'MONTH_YEAR') {
     this.filterType.set(type);
+    void this.loadSales();
   }
 
   // CLEAR FILTER
@@ -131,9 +153,58 @@ export class AdminReports {
     this.selectedDate.set(null);
     this.rangeStart.set(null);
     this.rangeEnd.set(null);
-    this.selectedMonth.set(new Date().getMonth());
-    this.selectedYear.set(new Date().getFullYear());
-    this.parseDateCache.clear(); // Clear cache on filter reset
+    this.selectedMonth.set(this.reportDate.getMonth());
+    this.selectedYear.set(this.reportDate.getFullYear());
+    void this.loadSales();
+  }
+
+  private getActiveDateRange(): [Date, Date] | null {
+    if (this.filterType() === 'DATE') {
+      const date = this.selectedDate();
+      return date ? [this.startOfDay(date), this.endOfDay(date)] : null;
+    }
+
+    if (this.filterType() === 'RANGE') {
+      const start = this.rangeStart();
+      const end = this.rangeEnd();
+      return start && end ? [this.startOfDay(start), this.endOfDay(end)] : null;
+    }
+
+    if (this.filterType() === 'MONTH_YEAR') {
+      const year = this.selectedYear();
+      const month = this.selectedMonth();
+      return [
+        new Date(year, month, 1),
+        this.endOfDay(new Date(year, month + 1, 0))
+      ];
+    }
+
+    return this.getDateRange(this.viewMode());
+  }
+
+  onSelectedDateChange(date: Date | null) {
+    this.selectedDate.set(date);
+    void this.loadSales();
+  }
+
+  onRangeStartChange(date: Date | null) {
+    this.rangeStart.set(date);
+    if (this.rangeEnd()) void this.loadSales();
+  }
+
+  onRangeEndChange(date: Date | null) {
+    this.rangeEnd.set(date);
+    if (this.rangeStart()) void this.loadSales();
+  }
+
+  onMonthChange(month: number) {
+    this.selectedMonth.set(month);
+    void this.loadSales();
+  }
+
+  onYearChange(year: number) {
+    this.selectedYear.set(year);
+    void this.loadSales();
   }
 
   // PARSE SALES DATE (cached)
@@ -148,11 +219,6 @@ export class AdminReports {
     const date = new Date(year, MONTH_INDEX_MAP.get(monthName) ?? 0, day);
     this.parseDateCache.set(docId, date);
     return date;
-  }
-
-  // MONTH INDEX (optimized with Map lookup)
-  monthIndex(monthName: string): number {
-    return MONTH_INDEX_MAP.get(monthName) ?? 0;
   }
 
   // START OF DAY
@@ -185,7 +251,7 @@ export class AdminReports {
 
   // GET DATE RANGE helper
   private getDateRange(viewMode: ViewMode): [Date, Date] {
-    const now = new Date();
+    const now = this.reportDate;
     let start: Date, end: Date;
 
     if (viewMode === 'WEEK') {
@@ -206,7 +272,7 @@ export class AdminReports {
   }
 
   // SAFE SALE TOTAL helper
-  private getSaleTotal(sale: any): number {
+  private getSaleTotal(sale: SalesRecord): number {
     return Number(sale.total) || 0;
   }
 
@@ -255,9 +321,9 @@ export class AdminReports {
   });
 
   // TOTAL SALES
-  totalSales = computed(() => {
-    return this.filteredSales().reduce((sum, sale) => sum + this.getSaleTotal(sale), 0);
-  });
+  totalSales = computed(() =>
+    this.aggregated().reduce((sum, [, total]) => sum + total, 0)
+  );
 
   // NUMBER OF DAYS
   numberOfDays = computed(() => {
@@ -290,12 +356,12 @@ export class AdminReports {
 
     // MONTH
     if (this.viewMode() === 'MONTH') {
-      const now = new Date();
+      const now = this.reportDate;
       return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     }
 
     // YEAR
-    const year = new Date().getFullYear();
+    const year = this.reportDate.getFullYear();
     return new Date(year, 1, 29).getMonth() === 1 ? 366 : 365;
   });
 
@@ -445,11 +511,5 @@ export class AdminReports {
   chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    onClick: (_: any, elements: any[]) => {
-      if (!elements.length) return;
-      // Handle chart click - can be used for drilling down or highlighting
-      const index = elements[0].index;
-      const selectedLabel = this.chartData().labels[index];
-    },
   };
 }
