@@ -34,11 +34,23 @@ export class ExpenseFilterDialog {
 
   form: FormGroup = this.data.form;
   items = this.data.items;
+  applyFilter = this.data.apply;
+  onPurchaseDateSelected = this.data.onPurchaseDateSelected;
+  onRangeDateSelected = this.data.onRangeDateSelected;
   setYesterday = this.data.setYesterday;
   setThisWeek = this.data.setThisWeek;
   setThisMonth = this.data.setThisMonth;
 
+  get canApply(): boolean {
+    const fromDate = this.form.value.fromDate;
+    const toDate = this.form.value.toDate;
+
+    return !(!!fromDate !== !!toDate);
+  }
+
   apply() {
+    if (!this.canApply) return;
+    this.applyFilter();
     this.dialogRef.close();
   }
 

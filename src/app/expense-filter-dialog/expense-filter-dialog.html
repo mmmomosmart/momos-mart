@@ -26,21 +26,21 @@
 
     <mat-form-field appearance="outline">
       <mat-label>Purchase Date</mat-label>
-      <input matInput [matDatepicker]="picker" formControlName="purchaseDate" />
+      <input matInput [matDatepicker]="picker" formControlName="purchaseDate" (dateChange)="onPurchaseDateSelected()" />
       <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
       <mat-datepicker #picker></mat-datepicker>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>From Date</mat-label>
-      <input matInput [matDatepicker]="from" formControlName="fromDate" />
+      <input matInput [matDatepicker]="from" formControlName="fromDate" (dateChange)="onRangeDateSelected()" />
       <mat-datepicker-toggle matIconSuffix [for]="from"></mat-datepicker-toggle>
       <mat-datepicker #from></mat-datepicker>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>To Date</mat-label>
-      <input matInput [matDatepicker]="to" formControlName="toDate" />
+      <input matInput [matDatepicker]="to" formControlName="toDate" (dateChange)="onRangeDateSelected()" />
       <mat-datepicker-toggle matIconSuffix [for]="to"></mat-datepicker-toggle>
       <mat-datepicker #to></mat-datepicker>
     </mat-form-field>
@@ -58,6 +58,6 @@
 </mat-dialog-content>
 
 <mat-dialog-actions class="dialog-actions">
-  <button mat-raised-button (click)="clear()">Clear</button>
-  <button mat-raised-button color="primary" (click)="apply()">Apply</button>
+  <button mat-raised-button (click)="clear()">Reset</button>
+  <button mat-raised-button color="primary" (click)="apply()" [disabled]="!canApply">Apply</button>
 </mat-dialog-actions>

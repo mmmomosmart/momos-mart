@@ -183,9 +183,9 @@
   <div class="report-actions">
     <button
       mat-raised-button
-      color="primary"
+      class="download-pdf-button"
       type="button"
-      [disabled]="loading() || !aggregated().length"
+      [disabled]="loading() || !filteredSales().length"
       (click)="exportPdf()">
       Download PDF
     </button>

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, effect } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
@@ -27,7 +27,6 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { FirestoreService } from '../service/firestore.service';
-import { InvoiceService } from '../service/invoice-service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 export interface Expense {
@@ -36,6 +35,14 @@ export interface Expense {
   amount: number;
   purchaseDate: Date;
   status: 'Paid' | 'Due';
+}
+
+interface ExpenseFilters {
+  item?: string;
+  status?: 'Paid' | 'Due' | '';
+  purchaseDate?: Date | null;
+  fromDate?: Date | null;
+  toDate?: Date | null;
 }
 
 interface ExpenseGroup {
@@ -68,14 +75,12 @@ interface ExpenseGroup {
   templateUrl: './expense-list.html',
   styleUrl: './expense-list.scss',
 })
-export class ExpenseList {
+export class ExpenseList implements OnDestroy {
   auth = inject(AuthService);
-  invoiceService = inject(InvoiceService);
   firestoreService = inject(FirestoreService);
 
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
-  today = new Date();
 
   filterForm = this.fb.group({
     item: [''],
@@ -85,27 +90,42 @@ export class ExpenseList {
     toDate: [null as Date | null]
   });
 
-  constructor(private fs: FirestoreService) {
+  private lastDateQueryKey: string | null = null;
+
+  constructor() {
     const today = this.normalizeDate(new Date());
     this.dateFilter.set(today);
-    this.filterForm.valueChanges.subscribe(value => {
-      this.pageIndex.set(0);
-      // If range is selected → clear single date
-      if (value.fromDate || value.toDate) {
-        this.filterForm.patchValue(
-          { purchaseDate: null },
-          { emitEvent: false }
-        );
-        this.dateFilter.set(null);
-      }
+  }
 
-      this.itemFilter.set(value.item ?? '');
-      this.statusFilter.set(value.status ?? '');
-      this.dateFilter.set(value.purchaseDate ?? null);
-      this.fromDate.set(value.fromDate ?? null);
-      this.toDate.set(value.toDate ?? null);
-    });
+  private applyFilterState(value: any) {
+    this.pageIndex.set(0);
+    const hasDateRange = !!(value.fromDate || value.toDate);
+    const selectedDate = hasDateRange ? null : value.purchaseDate ?? null;
 
+    if (hasDateRange && value.purchaseDate) {
+      this.filterForm.patchValue(
+        { purchaseDate: null },
+        { emitEvent: false }
+      );
+    }
+
+    this.itemFilter.set(value.item ?? '');
+    this.statusFilter.set((value.status as 'Paid' | 'Due' | '') ?? '');
+    this.dateFilter.set(selectedDate);
+    this.fromDate.set(value.fromDate ?? null);
+    this.toDate.set(value.toDate ?? null);
+
+    if (!this.fromDate() || !this.toDate()) {
+      this.sortBy.set('date_desc');
+      this.groupBy.set('');
+    }
+
+    const nextDateQueryKey = this.getDateQueryKey();
+
+    if (nextDateQueryKey !== this.lastDateQueryKey) {
+      this.lastDateQueryKey = nextDateQueryKey;
+      this.refreshExpensesByCurrentFilters();
+    }
   }
 
   private readonly defaultItems = [
@@ -131,8 +151,8 @@ export class ExpenseList {
     ? ['item', 'amount', 'purchaseDate', 'status', 'actions']
     : ['item', 'amount', 'purchaseDate', 'status'];
 
-  expenses = computed(() => this.fs.expenses$());
-  loading = computed(() => this.expenses().length === 0);
+  expenses = computed(() => this.firestoreService.expenses$());
+  loading = this.firestoreService.expensesLoading;
   sortBy = signal<'date_desc' | 'date_asc' | 'paid_first' | 'due_first'>('date_desc');
   pageIndex = signal(0);
   pageSize = signal(10);
@@ -141,13 +161,46 @@ export class ExpenseList {
 
   // Filters
   itemFilter = signal('');
-  statusFilter = signal('');
+  statusFilter = signal<'' | 'Paid' | 'Due'>('');
   dateFilter = signal<Date | null>(null);
   fromDate = signal<Date | null>(null);
   toDate = signal<Date | null>(null);
 
   ngOnInit() {
-    this.fs.startExpensesListener();
+    this.lastDateQueryKey = this.getDateQueryKey();
+    this.refreshExpensesByCurrentFilters();
+  }
+
+  ngOnDestroy() {
+    this.firestoreService.stopExpensesListener();
+  }
+
+  private getCurrentExpenseFilters(): ExpenseFilters {
+    return {
+      purchaseDate: this.dateFilter(),
+      fromDate: this.fromDate(),
+      toDate: this.toDate()
+    };
+  }
+
+  private getDateQueryKey(): string {
+    const selectedDate = this.dateFilter();
+    const fromDate = this.fromDate();
+    const toDate = this.toDate();
+
+    if (selectedDate) {
+      return `purchase:${this.normalizeDate(selectedDate).toISOString()}`;
+    }
+
+    if (fromDate && toDate) {
+      return `range:${this.normalizeDate(fromDate).toISOString()}|${this.normalizeDate(toDate).toISOString()}`;
+    }
+
+    return 'all';
+  }
+
+  private refreshExpensesByCurrentFilters() {
+    this.firestoreService.startExpensesListener(this.getCurrentExpenseFilters());
   }
 
   private normalizeDate(d: Date) {
@@ -172,12 +225,58 @@ export class ExpenseList {
       data: {
         form: this.filterForm,
         items: this.items(),
+        apply: () => this.applyCurrentFilter(),
+        onPurchaseDateSelected: () => this.onPurchaseDateSelected(),
+        onRangeDateSelected: () => this.onRangeDateSelected(),
         clear: () => this.clearFilters(),
         setYesterday: () => this.setYesterday(),
         setThisWeek: () => this.setThisWeek(),
         setThisMonth: () => this.setThisMonth()
       }
     });
+  }
+
+  private applyCurrentFilter() {
+    const purchaseDate = this.filterForm.value.purchaseDate ?? null;
+    const fromDate = purchaseDate ? null : this.filterForm.value.fromDate ?? null;
+    const toDate = purchaseDate ? null : this.filterForm.value.toDate ?? null;
+
+    if (!!fromDate !== !!toDate) {
+      return;
+    }
+
+    if (purchaseDate) {
+      this.filterForm.patchValue(
+        { fromDate: null, toDate: null },
+        { emitEvent: false }
+      );
+    }
+
+    this.applyFilterState({
+      item: this.filterForm.value.item ?? '',
+      status: (this.filterForm.value.status as 'Paid' | 'Due' | '') ?? '',
+      purchaseDate,
+      fromDate,
+      toDate
+    });
+  }
+
+  onPurchaseDateSelected() {
+    if (this.filterForm.value.purchaseDate) {
+      this.filterForm.patchValue(
+        { fromDate: null, toDate: null },
+        { emitEvent: false }
+      );
+    }
+  }
+
+  onRangeDateSelected() {
+    if (this.filterForm.value.fromDate || this.filterForm.value.toDate) {
+      this.filterForm.patchValue(
+        { purchaseDate: null },
+        { emitEvent: false }
+      );
+    }
   }
 
   openEditDialog(expense: Expense) {
@@ -191,7 +290,7 @@ export class ExpenseList {
 
     dialogRef.afterClosed().subscribe(updated => {
       if (!updated) return;
-      this.fs.addWithId('expenses', updated.id, updated);
+      this.firestoreService.addWithId('expenses', updated.id, updated);
 
       Swal.fire({
         title: 'Saved',
@@ -253,43 +352,48 @@ export class ExpenseList {
     }));
   });
 
+  private matchesExpenseFilters(expense: Expense): boolean {
+    const itemValue = this.itemFilter().trim().toLowerCase();
+    const statusValue = this.statusFilter();
+    const from = this.fromDate();
+    const to = this.toDate();
+    const selectedDate = this.dateFilter();
+
+    const matchItem = itemValue
+      ? expense.item.toLowerCase().includes(itemValue)
+      : true;
+
+    const matchStatus = statusValue
+      ? expense.status === statusValue
+      : true;
+
+    const purchaseDate = new Date(expense.purchaseDate).getTime();
+    const matchDate = from && to
+      ? purchaseDate >= +from && purchaseDate <= +this.endOfDay(to)
+      : selectedDate
+        ? new Date(expense.purchaseDate).toDateString() === new Date(selectedDate).toDateString()
+        : true;
+
+    return matchItem && matchStatus && matchDate;
+  }
+
   filteredExpenses = computed(() => {
     const list = this.expenses();
-    const filtered = list.filter(e => {
+    const filtered = list.filter((expense: Expense) => this.matchesExpenseFilters(expense));
 
-      const matchItem = this.itemFilter()
-        ? e.item.toLowerCase().includes(this.itemFilter().toLowerCase())
-        : true;
-
-      const matchStatus = this.statusFilter()
-        ? e.status === this.statusFilter()
-        : true;
-
-      const hasRange = this.fromDate() && this.toDate();
-
-      const matchDate = hasRange
-        ? new Date(e.purchaseDate) >= this.fromDate()! &&
-        new Date(e.purchaseDate) <= this.endOfDay(this.toDate()!)
-        : this.dateFilter()
-          ? new Date(e.purchaseDate).toDateString() ===
-          new Date(this.dateFilter()!).toDateString()
-          : true;
-
-      return matchItem && matchStatus && matchDate;
-    });
-
-    // Apply sorting ONLY when range filter is active
     if (!this.isRangeFilterActive()) {
       return filtered;
     }
 
-    // SORTING
     return [...filtered].sort((a, b) => {
+      const aTime = +new Date(a.purchaseDate);
+      const bTime = +new Date(b.purchaseDate);
+
       switch (this.sortBy()) {
         case 'date_desc':
-          return +new Date(b.purchaseDate) - +new Date(a.purchaseDate);
+          return bTime - aTime;
         case 'date_asc':
-          return +new Date(a.purchaseDate) - +new Date(b.purchaseDate);
+          return aTime - bTime;
         case 'paid_first':
           return a.status === 'Paid' ? -1 : 1;
         case 'due_first':
@@ -326,33 +430,33 @@ export class ExpenseList {
       .reduce((sum, e) => sum + e.amount, 0)
   );
 
+  private applyPresetDateRange(payload: {
+    purchaseDate: Date | null;
+    fromDate: Date | null;
+    toDate: Date | null;
+  }) {
+    this.filterForm.patchValue(payload);
+  }
+
   setYesterday() {
     const today = this.normalizeDate(new Date());
     today.setDate(today.getDate() - 1);
 
-    this.filterForm.patchValue({
+    this.applyPresetDateRange({
       purchaseDate: today,
       fromDate: null,
       toDate: null
     });
-
-    this.dateFilter.set(today);
-    this.fromDate.set(null);
-    this.toDate.set(null);
   }
 
   setToday() {
     const today = this.normalizeDate(new Date());
 
-    this.filterForm.patchValue({
+    this.applyPresetDateRange({
       purchaseDate: today,
       fromDate: null,
       toDate: null
     });
-
-    this.dateFilter.set(today);
-    this.fromDate.set(null);
-    this.toDate.set(null);
   }
 
   setThisWeek() {
@@ -363,15 +467,11 @@ export class ExpenseList {
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
 
-    this.filterForm.patchValue({
+    this.applyPresetDateRange({
       purchaseDate: null,
       fromDate: start,
       toDate: end
     });
-
-    this.dateFilter.set(null);
-    this.fromDate.set(start);
-    this.toDate.set(end);
   }
 
   setThisMonth() {
@@ -379,15 +479,11 @@ export class ExpenseList {
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
     const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    this.filterForm.patchValue({
+    this.applyPresetDateRange({
       purchaseDate: null,
       fromDate: start,
       toDate: end
     });
-
-    this.dateFilter.set(null);
-    this.fromDate.set(start);
-    this.toDate.set(end);
   }
 
   toggleStatus(expense: Expense) {
@@ -443,6 +539,17 @@ export class ExpenseList {
     this.dateFilter.set(today);
     this.fromDate.set(null);
     this.toDate.set(null);
+    this.itemFilter.set('');
+    this.statusFilter.set('');
+  }
+
+  private getExpenseExportRows() {
+    return this.filteredExpenses().map(e => ({
+      Item: e.item,
+      Amount: e.amount,
+      Date: new Date(e.purchaseDate).toLocaleDateString(),
+      Status: e.status
+    }));
   }
 
   exportExcel() {
@@ -454,12 +561,7 @@ export class ExpenseList {
   }
 
   exportExcelWeb() {
-    const data = this.filteredExpenses().map(e => ({
-      Item: e.item,
-      Amount: e.amount,
-      Date: new Date(e.purchaseDate).toLocaleDateString(),
-      Status: e.status
-    }));
+    const data = this.getExpenseExportRows();
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -472,20 +574,13 @@ export class ExpenseList {
 
     saveAs(
       new Blob([buffer], { type: 'application/octet-stream' }),
-      `expenses_${Date.now()}.xlsx`
+      'Expenses_Report_Sheet.xlsx'
     );
   }
 
   async exportExcelCapacitor() {
     try {
-      const worksheet = XLSX.utils.json_to_sheet(
-        this.filteredExpenses().map(e => ({
-          Item: e.item,
-          Amount: e.amount,
-          Date: new Date(e.purchaseDate).toLocaleDateString(),
-          Status: e.status
-        }))
-      );
+      const worksheet = XLSX.utils.json_to_sheet(this.getExpenseExportRows());
 
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Expenses');
@@ -496,7 +591,7 @@ export class ExpenseList {
         type: 'base64'
       });
 
-      const fileName = `expenses_${Date.now()}.xlsx`;
+      const fileName = 'Expenses_Report_Sheet.xlsx';
 
       // Write file
       await Filesystem.writeFile({
@@ -542,75 +637,96 @@ export class ExpenseList {
     }
   }
 
-  exportPdfWeb() {
-    const doc = new jsPDF();
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    doc.setFontSize(16);
-    doc.text('Expense Report', 14, 15);
-
-    doc.setFontSize(12);
-    doc.text(
-      `Total: Rs ${this.totalAmount()}`,
-      pageWidth - 14,
-      15,
-      { align: 'right' }
-    );
-
-    const rows = this.filteredExpenses().map(e => [
+  private getExpensePdfRows() {
+    return this.filteredExpenses().map(e => [
       e.item,
       e.amount.toString(),
       new Date(e.purchaseDate).toLocaleDateString(),
       e.status
     ]);
+  }
+
+  private getExpensePdfPeriod(): string {
+    const selectedDate = this.dateFilter();
+    const fromDate = this.fromDate();
+    const toDate = this.toDate();
+
+    if (selectedDate) {
+      return this.formatExpensePdfDate(selectedDate);
+    }
+
+    if (fromDate && toDate) {
+      return `${this.formatExpensePdfDate(fromDate)} - ${this.formatExpensePdfDate(toDate)}`;
+    }
+
+    return 'All Dates';
+  }
+
+  private formatExpensePdfDate(date: Date): string {
+    return new Date(date).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  }
+
+  async exportPdfWeb() {
+    const doc = new jsPDF();
+
+    const logo = await this.loadLogo();
+    const contentX = logo ? 44 : 14;
+
+    if (logo) {
+      doc.addImage(logo, 'PNG', 14, 5, 30, 30);
+    }
+
+    doc.setFontSize(16);
+    doc.text('Momos Mart - Expense Report', contentX, 15);
+    doc.setFontSize(11);
+    doc.text(`Period: ${this.getExpensePdfPeriod()}`, contentX, 24);
+    doc.text(`Total: Rs ${this.totalAmount()}`, contentX, 32);
+
+    const rows = this.getExpensePdfRows();
 
     autoTable(doc, {
       head: [['Item', 'Amount (Rs)', 'Date', 'Status']],
       body: rows,
-      startY: 25,
+      startY: 40,
       styles: { fontSize: 10 }
     });
 
-    doc.save('expenses_report.pdf');
+    doc.save('Expenses_Report.pdf');
   }
 
   async exportPdfCapacitor() {
     try {
       const doc = new jsPDF();
 
-      const pageWidth = doc.internal.pageSize.getWidth();
+      const logo = await this.loadLogo();
+      const contentX = logo ? 44 : 14;
 
-      // Title
+      if (logo) {
+        doc.addImage(logo, 'PNG', 14, 5, 30, 30);
+      }
+
       doc.setFontSize(16);
-      doc.text('Expense Report', 14, 15);
+      doc.text('Momos Mart - Expense Report', contentX, 15);
+      doc.setFontSize(11);
+      doc.text(`Period: ${this.getExpensePdfPeriod()}`, contentX, 24);
+      doc.text(`Total: Rs ${this.totalAmount()}`, contentX, 32);
 
-      doc.setFontSize(12);
-      doc.text(
-        `Total: Rs ${this.totalAmount()}`,
-        pageWidth - 14,
-        15,
-        { align: 'right' }
-      );
-
-      // Table data
-      const rows = this.filteredExpenses().map(e => [
-        e.item,
-        e.amount.toString(),
-        new Date(e.purchaseDate).toLocaleDateString(),
-        e.status
-      ]);
+      const rows = this.getExpensePdfRows();
 
       autoTable(doc, {
         head: [['Item', 'Amount (Rs)', 'Date', 'Status']],
         body: rows,
-        startY: 25,
+        startY: 40,
         styles: { fontSize: 10 }
       });
 
       // Convert to base64
       const base64 = doc.output('datauristring').split(',')[1];
-      const fileName = 'expenses_report.pdf';
+      const fileName = 'Expenses_Report.pdf';
 
       // Write file
       await Filesystem.writeFile({
@@ -644,6 +760,22 @@ export class ExpenseList {
         timer: 700,
         showConfirmButton: false
       });
+    }
+  }
+
+  private async loadLogo(): Promise<string | null> {
+    try {
+      const response = await fetch('assets/icons/icon_512x512.png');
+      const blob = await response.blob();
+
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
     }
   }
 

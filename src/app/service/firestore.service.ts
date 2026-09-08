@@ -19,7 +19,9 @@ import {
   where,
   orderBy,
   Timestamp,
-  writeBatch
+  writeBatch,
+  CollectionReference,
+  Query
 } from 'firebase/firestore';
 import { Expense } from '../expense-list/expense-list';
 
@@ -30,6 +32,10 @@ export class FirestoreService {
 
   private _expenses = signal<any[]>([]);
   readonly expenses$ = this._expenses.asReadonly();
+
+  private _expensesLoading = signal(false);
+  readonly expensesLoading = this._expensesLoading.asReadonly();
+
   private expensesUnsub: (() => void) | null = null;
 
   private _invoicesByDate = signal<any[]>([]);
@@ -283,7 +289,7 @@ export class FirestoreService {
 
     this.invoicesByDateUnsub = onSnapshot(q, snap => {
       const data = snap.docs.map(d => d.data()).reverse();
-      console.log(data)
+      console.log("Todays invoices data:", data);
       this._invoicesByDate.set(data);
     });
   }
@@ -293,14 +299,48 @@ export class FirestoreService {
     this.invoicesByDateUnsub = null;
   }
 
-  startExpensesListener() {
-    if (this.expensesUnsub) return; // already listening
+  startExpensesListener(filters: {
+    purchaseDate?: Date | null;
+    fromDate?: Date | null;
+    toDate?: Date | null;
+  } = {}) {
+    if (this.expensesUnsub) {
+      this.expensesUnsub();
+      this.expensesUnsub = null;
+    }
 
-    console.log("Expenses db called")
+    console.log('Expenses db called with filters:', filters);
+    this._expensesLoading.set(true);
 
-    const q = collection(this.db, 'expenses');
+    let queryRef: CollectionReference | Query = collection(this.db, 'expenses');
 
-    this.expensesUnsub = onSnapshot(q, snap => {
+    if (filters.purchaseDate) {
+      const start = new Date(filters.purchaseDate);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(filters.purchaseDate);
+      end.setHours(23, 59, 59, 999);
+
+      queryRef = query(
+        queryRef,
+        where('purchaseDate', '>=', Timestamp.fromDate(start)),
+        where('purchaseDate', '<=', Timestamp.fromDate(end))
+      );
+    } else if (filters.fromDate && filters.toDate) {
+      const start = new Date(filters.fromDate);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(filters.toDate);
+      end.setHours(23, 59, 59, 999);
+
+      queryRef = query(
+        queryRef,
+        where('purchaseDate', '>=', Timestamp.fromDate(start)),
+        where('purchaseDate', '<=', Timestamp.fromDate(end))
+      );
+    }
+
+    this.expensesUnsub = onSnapshot(queryRef, snap => {
       const data = snap.docs.map(d => {
         const e = d.data() as any;
 
@@ -311,12 +351,16 @@ export class FirestoreService {
             : new Date(e['purchaseDate'])
         };
       });
+
+      console.log('Loaded expenses count:', data.length, 'filters:', filters);
       this._expenses.set(data);
+      this._expensesLoading.set(false);
     });
   }
 
   stopExpensesListener() {
     this.expensesUnsub?.();
     this.expensesUnsub = null;
+    this._expensesLoading.set(false);
   }
 }

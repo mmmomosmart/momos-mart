@@ -52,3 +52,18 @@
   justify-content: center;
   margin-top: 12px;
 }
+
+.download-pdf-button {
+  background-color: #ff6b6b !important;
+  color: #fff !important;
+}
+
+.download-pdf-button:hover:not(:disabled) {
+  background-color: #ff6b6b !important;
+}
+
+.download-pdf-button:disabled {
+  background-color: #ff6b6b !important;
+  color: #fff !important;
+  opacity: 0.6;
+}

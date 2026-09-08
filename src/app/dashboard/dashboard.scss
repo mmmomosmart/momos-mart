@@ -1,6 +1,6 @@
 .dashboard-container {
     //margin: 2%;
-    padding: 7px;
+    padding: 7px 7px 110px;
 }
 
 .dashboard-safe {
@@ -135,6 +135,7 @@
 
 .chip {
     padding: 1.4%;
+    margin: 4px 0;
     color: white;
     background: linear-gradient(45deg, #ff6b6b, #ff8e53);
     border: 2px;

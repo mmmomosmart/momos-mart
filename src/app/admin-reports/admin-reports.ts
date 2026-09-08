@@ -536,7 +536,7 @@ export class AdminReports {
       const contentX = logo ? 44 : 14;
 
       if (logo) {
-        doc.addImage(logo, 'PNG', 14, 8, 24, 24);
+        doc.addImage(logo, 'PNG', 14, 5, 30, 30);
       }
 
       doc.setFontSize(16);
